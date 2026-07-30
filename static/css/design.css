@@ -62,11 +62,25 @@ body {
     font-weight: 500
 }
 
+
 .nav-link:hover {
     color: var(--ink)
 }
 
-.site-logo { height: 36px; width: auto; display: block }
+.site-logo {
+    height: 36px;
+    width: auto;
+    display: block
+}
+
+.nav-link-red {
+    color: #ef4146;
+    font-weight: 600;
+}
+
+.nav-link-red:hover {
+    color: #c93b3b;
+}
 
 .main-content {
     flex: 1;

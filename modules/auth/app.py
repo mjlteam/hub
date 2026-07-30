@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db
 from models import User
 import re
@@ -9,6 +9,9 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
+    # redirect authenticated users to hub
+    if current_user.is_authenticated:
+        return redirect(url_for('hub.hub'))
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -24,6 +27,9 @@ def login():
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
+    # redirect authenticated users to hub
+    if current_user.is_authenticated:
+        return redirect(url_for('hub.hub'))
     if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')

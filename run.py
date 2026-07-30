@@ -2,8 +2,11 @@ import json
 import importlib
 import os
 from pathlib import Path
-from flask import Flask, Blueprint, jsonify
+from flask import Flask, Blueprint, jsonify, render_template
 from dotenv import load_dotenv
+from extensions import db, login_manager
+from models import User
+from datetime import datetime
 
 # Load .env from project root (if present)
 load_dotenv()
@@ -37,7 +40,6 @@ def create_app():
     app.register_blueprint(bp)
 
     # initialize extensions
-    from extensions import db, login_manager
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -72,9 +74,6 @@ def create_app():
             # If the auth module was just loaded, set up the user loader
             if pkg.endswith('auth'):
                 try:
-                    from models import User
-
-                    from extensions import login_manager
 
                     @login_manager.user_loader
                     def load_user(user_id):
@@ -96,12 +95,8 @@ def create_app():
     # provide helper functions to templates
     @app.context_processor
     def inject_now():
-        from datetime import datetime
-
         return {"now": datetime.utcnow}
 
-    # error handlers
-    from flask import render_template
 
     @app.errorhandler(404)
     def page_not_found(e):
