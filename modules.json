@@ -5,5 +5,11 @@
       "package": "modules.hub",
       "enabled": true
     }
+    ,
+    {
+      "name": "auth",
+      "package": "modules.auth",
+      "enabled": true
+    }
   ]
 }

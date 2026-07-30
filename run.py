@@ -1,22 +1,49 @@
 import json
 import importlib
+import os
 from pathlib import Path
-from flask import Flask, Blueprint, jsonify, redirect
+from flask import Flask, Blueprint, jsonify
+from dotenv import load_dotenv
+
+# Load .env from project root (if present)
+load_dotenv()
 
 
 def create_app():
-    """Create and configure the Flask application.
 
-    Loads modules defined in `modules.json` at the project root. Each module
-    should expose either a `bp` Blueprint or an `init_module(app)` function
-    in its `app.py`.
-    """
     app = Flask(__name__)
+
+    # Basic configuration
+    app.config.setdefault('SECRET_KEY', os.environ.get('SECRET_KEY', 'dev-secret'))
+    app.config.setdefault('SQLALCHEMY_DATABASE_URI', os.environ.get('DATABASE_URL', 'sqlite:///main.db'))
+    app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+
+    import secrets
+
+    sk = app.config.get('SECRET_KEY')
+    if not sk or sk == 'dev-secret':
+        gen = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+        app.config['SECRET_KEY'] = gen
+        app.secret_key = gen
+        if sk == 'dev-secret':
+            # warn about insecure default when used
+            print('Warning: using generated SECRET_KEY or default dev-secret. Set SECRET_KEY in .env for persistence.')
+    else:
+        app.secret_key = sk
 
     # default minimal route (fallback)
     bp = Blueprint('main', __name__)
 
     app.register_blueprint(bp)
+
+    # initialize extensions
+    from extensions import db, login_manager
+
+    db.init_app(app)
+    login_manager.init_app(app)
+    # where to redirect for login
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Bitte melde dich an, um diese Seite zu sehen.'
 
     # project root
     project_root = Path(__file__).resolve().parent
@@ -41,6 +68,19 @@ def create_app():
             except Exception as e:
                 print(f"Failed importing module '{mod_name}': {e}")
                 continue
+
+            # If the auth module was just loaded, set up the user loader
+            if pkg.endswith('auth'):
+                try:
+                    from models import User
+
+                    from extensions import login_manager
+
+                    @login_manager.user_loader
+                    def load_user(user_id):
+                        return User.query.get(int(user_id))
+                except Exception:
+                    pass
 
             if hasattr(mod, 'bp'):
                 try:

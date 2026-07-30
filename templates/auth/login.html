@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+  <div class="max-w-md mx-auto">
+    <div class="bg-white p-6 rounded shadow">
+      <h2 class="text-xl font-semibold mb-4">Anmeldung</h2>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-2 mb-4">
+          {% for category, msg in messages %}
+            <div class="text-sm text-red-600">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% endwith %}
+      <form method="post" class="space-y-4">
+        <input name="next" type="hidden" value="{{ next or '' }}">
+        <div>
+          <label class="block text-sm">Benutzername oder E-Mail</label>
+          <input name="username" class="w-full border rounded p-2" />
+        </div>
+        <div>
+          <label class="block text-sm">Passwort</label>
+          <input name="password" type="password" class="w-full border rounded p-2" />
+        </div>
+        <div>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Anmelden</button>
+          <a class="ml-4 text-sm text-gray-600" href="{{ url_for('auth.register') }}">Registrieren</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
