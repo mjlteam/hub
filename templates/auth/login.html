@@ -3,7 +3,7 @@
 {% block title %}Anmelden — MJL-Team{% endblock %}
 
 {% block content %}
-<div class="auth-container" x-data="{ loaded: false, submitting: false }" x-init="setTimeout(() => loaded = true, 400)">
+<div class="auth-container" x-data="{ submitting: false }">
     <div class="auth-card">
 
         <div class="auth-header">
@@ -11,7 +11,7 @@
         </div>
 
         <div class="skel-stack">
-            <div class="card card-padded skel-overlay" x-show="!loaded" x-transition.opacity.duration.200ms>
+            <div class="card card-padded skel-overlay">
                 <div class="skel skel-label"></div>
                 <div class="skel skel-input"></div>
                 <div class="skel skel-label"></div>

@@ -991,6 +991,13 @@ a:hover {
     z-index: 1;
     background: #ffffff;
     border-radius: var(--radius-lg);
+    pointer-events: none;
+    animation: skel-fadeout 0.25s ease-out 0.4s forwards;
+}
+
+@keyframes skel-fadeout {
+    0%   { opacity: 1; visibility: visible; }
+    100% { opacity: 0; visibility: hidden; }
 }
 
 .skel {

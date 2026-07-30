@@ -3,7 +3,7 @@
 {% block body_class %}split-page text-[#0d0d0d] font-sans antialiased{% endblock %}
 
 {% block layout %}
-<div class="split-page" x-data="{ showPw: false, loaded: false, submitting: false }" x-init="setTimeout(() => loaded = true, 400)">
+<div class="split-page" x-data="{ showPw: false, submitting: false }">
 
     <aside class="split-brand">
         <div class="split-brand-orb split-brand-orb--1"></div>
@@ -24,7 +24,7 @@
             </div>
 
             <div class="skel-stack">
-                <div class="skel-overlay" x-show="!loaded" x-transition.opacity.duration.200ms">
+                <div class="skel-overlay">
                     <div class="skel skel-label"></div>
                     <div class="skel skel-input"></div>
                     <div class="skel skel-label"></div>
