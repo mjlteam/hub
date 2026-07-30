@@ -177,6 +177,12 @@ label {
     font-weight: 600
 }
 
+.footer-version {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', monospace;
+    color: #6e6e6e;
+    font-size: 0.875rem;
+}
+
 @media (max-width:768px) {
     .container {
         padding: 16px

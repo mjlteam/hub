@@ -95,7 +95,16 @@ def create_app():
     # provide helper functions to templates
     @app.context_processor
     def inject_now():
-        return {"now": datetime.utcnow}
+        # include current UTC datetime factory and git commit short id if available
+        commit = None
+        try:
+            import subprocess
+
+            commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=project_root, stderr=subprocess.DEVNULL).decode().strip()
+        except Exception:
+            commit = None
+
+        return {"now": datetime.utcnow, "version": commit}
 
 
     @app.errorhandler(404)
