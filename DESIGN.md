@@ -1,4 +1,4 @@
-#MJL Design 
+Design
 
 1. Visual Theme & Atmosphere
 
