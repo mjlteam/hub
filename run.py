@@ -66,5 +66,17 @@ app = create_app()
 
 
 if __name__ == '__main__':
-    # Development server
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Run the Flask app')
+    parser.add_argument('--debug', action='store_true', help='Run server in debug mode')
+    args = parser.parse_args()
+
+    if args.debug:
+        host = '127.0.0.1'
+        debug_mode = True
+    else:
+        host = '0.0.0.0'
+        debug_mode = False
+
+    app.run(host=host, port=5000, debug=debug_mode)
