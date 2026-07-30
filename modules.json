@@ -1,8 +1,8 @@
 {
   "modules": [
     {
-      "name": "hello",
-      "package": "modules.hello",
+      "name": "hub",
+      "package": "modules.hub",
       "enabled": true
     }
   ]

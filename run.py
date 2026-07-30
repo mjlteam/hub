@@ -1,7 +1,7 @@
 import json
 import importlib
 from pathlib import Path
-from flask import Flask, Blueprint, jsonify
+from flask import Flask, Blueprint, jsonify, redirect
 
 
 def create_app():
@@ -19,7 +19,7 @@ def create_app():
 
     @bp.route('/')
     def index():
-        return jsonify(message="Hello, Flask! This is a minimal app.")
+        return redirect("/hub")
 
 
     app.register_blueprint(bp)
