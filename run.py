@@ -100,13 +100,30 @@ def create_app():
 
         return {"now": datetime.utcnow}
 
+    # error handlers
+    from flask import render_template
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        app.logger.exception(e)
+        return render_template('errors/500.html'), 500
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/403.html'), 403
+
+    @app.errorhandler(400)
+    def bad_request(e):
+        return render_template('errors/400.html'), 400
+
     return app
 
 
 app = create_app()
-
-
-
 
 if __name__ == '__main__':
     import argparse
