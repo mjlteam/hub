@@ -3,7 +3,7 @@
 {% block title %}Anmelden — MJL-Team{% endblock %}
 
 {% block content %}
-<div class="auth-container" x-data="{ submitting: false }">
+<div class="auth-container" x-data="{ submitting: false }" x-cloak>
     <div class="auth-card">
 
         <div class="auth-header">
@@ -33,12 +33,9 @@
                         <input id="password" name="password" type="password" class="input" placeholder="••••••••" autocomplete="current-password" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg btn-block">
-                        <span x-show="!submitting">Anmelden</span>
-                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
-                            <span class="spinner" data-size="md"></span>
-                            Lädt…
-                        </span>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting">
+                        <span>Anmelden</span>
+                        <span class="spinner spinner--xl btn-loading-spinner"></span>
                     </button>
                 </form>
             </div>

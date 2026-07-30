@@ -50,25 +50,60 @@
     <!-- ========== MAIN CONTENT ========== -->
     <main class="main-content">
 
-        {# --- Global Flash Messages --- #}
+        {# --- Toast Notifications (oben rechts, smooth slide-in, auto-dismiss) --- #}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="space-y-4" style="margin-bottom: 24px;">
-                    {% for category, msg in messages %}
-                        <div class="alert {% if category == 'error' %}alert-error{% elif category == 'success' %}alert-success{% elif category == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
-                            {% if category == 'error' %}
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top: 1px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                            {% elif category == 'success' %}
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top: 1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            {% elif category == 'warning' %}
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top: 1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            {% else %}
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top: 1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                            {% endif %}
-                            <span>{{ msg }}</span>
+                <div class="toast-container" x-data="toastComponent()">
+                    <template x-for="toast in toasts" :key="toast.id">
+                        <div
+                            class="toast"
+                            :class="{
+                                'toast--error': toast.category === 'error',
+                                'toast--success': toast.category === 'success',
+                                'toast--warning': toast.category === 'warning',
+                                'toast--info': toast.category !== 'error' && toast.category !== 'success' && toast.category !== 'warning'
+                            }"
+                            x-show="toast"
+                            x-transition:enter="toast-enter"
+                            x-transition:leave="toast-leave"
+                        >
+                            <svg class="toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <template x-if="toast.category === 'error'">
+                                    <><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>
+                                </template>
+                                <template x-if="toast.category === 'success'">
+                                    <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>
+                                </template>
+                                <template x-if="toast.category === 'warning'">
+                                    <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>
+                                </template>
+                                <template x-if="toast.category !== 'error' && toast.category !== 'success' && toast.category !== 'warning'">
+                                    <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>
+                                </template>
+                            </svg>
+                            <div class="toast__body" x-text="toast.msg"></div>
                         </div>
-                    {% endfor %}
+                    </template>
                 </div>
+
+                <script>
+                function toastComponent() {
+                    return {
+                        toasts: [],
+                        init() {
+                            {% for category, msg in messages %}
+                                setTimeout(() => {
+                                    let toastId = Date.now() + Math.random();
+                                    this.toasts.push({ id: toastId, category: '{{ category }}', msg: '{{ msg|e }}' });
+                                    setTimeout(() => {
+                                        this.toasts = this.toasts.filter(t => t.id !== toastId);
+                                    }, 2500);
+                                }, {{ 50 + loop.index0 * 80 }});
+                            {% endfor %}
+                        }
+                    };
+                }
+                </script>
             {% endif %}
         {% endwith %}
 

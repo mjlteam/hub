@@ -94,18 +94,6 @@ def validate_password(password: str, username: str | None = None):
     reasons = []
     if not password or len(password) < 8:
         reasons.append('mindestens 8 Zeichen')
-    if not re.search(r'[A-Z]', password):
-        reasons.append('mindestens ein Großbuchstabe')
-    if not re.search(r'[a-z]', password):
-        reasons.append('mindestens ein Kleinbuchstabe')
-    if not re.search(r'\d', password):
-        reasons.append('mindestens eine Ziffer')
-    if not re.search(r'[!@#$%^&*()_+\-=[\]{};:\\\\|,.<>\/?]', password):
-        reasons.append('mindestens ein Sonderzeichen, z.B. !@#$%')
-    if username:
-        try:
-            if username.strip() and username.lower() in password.lower():
-                reasons.append('das Passwort darf den Benutzernamen nicht enthalten')
-        except Exception:
-            pass
+    if not re.search(r'[A-Za-z]', password):
+        reasons.append('mindestens ein Buchstabe')
     return (len(reasons) == 0, reasons)

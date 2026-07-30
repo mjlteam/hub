@@ -60,14 +60,18 @@
                                 ></div>
                             </template>
                         </div>
+
+                        <div class="pw-label" :class="{ 'pw-label--visible': isStrong }">
+                            <svg class="pw-label__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Stark
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg btn-block">
-                        <span x-show="!submitting">Konto erstellen</span>
-                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
-                            <span class="spinner" data-size="md"></span>
-                            Lädt…
-                        </span>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting">
+                        <span>Konto erstellen</span>
+                        <span class="spinner spinner--xl btn-loading-spinner"></span>
                     </button>
                 </form>
             </div>
@@ -89,14 +93,19 @@ function registerForm() {
         submitting: false,
         password: '',
         strength: 0,
+        isStrong: false,
         checkStrength() {
-            let score = 0;
             const p = this.password || '';
-            if (p.length >= 8) score++;
-            if (/[A-Z]/.test(p)) score++;
-            if (/[a-z]/.test(p)) score++;
-            if (/[0-9]/.test(p) || /[^A-Za-z0-9]/.test(p)) score++;
-            this.strength = score;
+            const len = p.length;
+            // 4 bars basierend auf Länge, bei 8+ = voll
+            let s = 0;
+            if (len >= 2) s = 1;
+            if (len >= 4) s = 2;
+            if (len >= 6) s = 3;
+            if (len >= 8) s = 4;
+            this.strength = s;
+            // Stark = 8+ Zeichen + mindestens 1 Buchstabe
+            this.isStrong = len >= 8 && /[A-Za-z]/.test(p);
         }
     };
 }

@@ -242,7 +242,7 @@ a:hover {
 
 /* Primary */
 .btn-primary {
-    background: #262626;
+    background: #0d0d0d;
     color: #ffffff;
 }
 
@@ -252,6 +252,13 @@ a:hover {
 
 .btn-primary:active {
     background: #171717;
+}
+
+/* ---- Feste helle Blau-Farbe für Button-Text ---- */
+.btn-primary .btn-text-blue {
+    color: #a6cdea;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
 /* Secondary */
@@ -320,9 +327,11 @@ a:hover {
 /* default (md) is 32px / 12px / 14px */
 
 .btn-lg {
-    --btn-h: 36px;
-    --btn-px: 14px;
-    font-size: 14px;
+    --btn-h: 40px;
+    --btn-px: 18px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 14px;
 }
 
 /* Pill variant */
@@ -474,7 +483,7 @@ input:-webkit-autofill:focus {
     margin: 0;
 }
 
-/* --- Flash Messages / Alerts --- */
+/* --- Flash Messages die alten (fallback) --- */
 .alert {
     display: flex;
     align-items: flex-start;
@@ -484,30 +493,6 @@ input:-webkit-autofill:focus {
     font-size: 0.875rem;
     font-weight: 500;
     line-height: 1.45;
-}
-
-.alert-error {
-    background: var(--error-soft);
-    color: var(--error);
-    border: 1px solid var(--error-border);
-}
-
-.alert-success {
-    background: var(--teal-soft);
-    color: var(--teal-deep);
-    border: 1px solid rgba(16,163,127,0.2);
-}
-
-.alert-info {
-    background: #eff6ff;
-    color: var(--info);
-    border: 1px solid rgba(37,99,235,0.2);
-}
-
-.alert-warning {
-    background: #fffbeb;
-    color: var(--warning);
-    border: 1px solid rgba(245,166,35,0.2);
 }
 
 /* --- Pills & Tags --- */
@@ -755,7 +740,164 @@ input:-webkit-autofill:focus {
     background: var(--border-hairline);
 }
 
-/* --- Spacing Utilities --- */
+
+
+/* ============================================================
+   Button Loading State — neuer smoother Spinner
+   ============================================================ */
+
+/* SMOOTHER SPINNER: conic-gradient mit rotierenden Farben */
+@keyframes spinner-spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes spinner-fade {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 1; }
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: conic-gradient(from 0deg, #ffffff, #ffffff 60deg, rgba(255,255,255,0.3) 180deg, #ffffff 300deg, #ffffff 360deg);
+    animation: spinner-spin 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    will-change: transform;
+    flex-shrink: 0;
+}
+
+.spinner--dark {
+    background: conic-gradient(from 0deg, #262626, #262626 60deg, rgba(38,38,38,0.2) 180deg, #262626 300deg, #262626 360deg);
+}
+
+.spinner--xl {
+    width: 28px;
+    height: 28px;
+}
+
+/* ============================================================
+   Button Loading State — Centered via Flexbox
+   ============================================================
+
+   WENN .is-loading:
+     - Text verschwindet (display:none)
+     - Spinner wird sichtbar (display:inline-block)
+     - Zentriert durch button-eigenes flexbox
+   ============================================================ */
+
+.btn-loading-spinner {
+    display: none;
+}
+
+.btn.is-loading > span:first-child {
+    display: none;
+}
+
+.btn.is-loading .btn-loading-spinner {
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.btn.is-loading {
+    opacity: 0.5;
+}
+
+.btn.is-loading .spinner--xl {
+    opacity: 1;
+}
+
+/* ============================================================
+   Toast Notifications (oben rechts, slide-down)
+   ============================================================ */
+
+.toast-container {
+    position: fixed;
+    top: 96px;
+    right: 16px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    max-width: 380px;
+    width: 100%;
+}
+
+.toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.45;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.toast--error {
+    background: #0d0d0d;
+    color: #ef4146;
+    border: none;
+    box-shadow:
+        0 4px 24px rgba(239,65,70,0.15);
+    font-weight: 500;
+}
+
+.toast--success {
+    background: #10a37f;
+    color: #ffffff;
+    border: none;
+}
+
+.toast--warning {
+    background: #f5a623;
+    color: #ffffff;
+    border: none;
+}
+
+.toast--info {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+}
+
+.toast__icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+}
+
+.toast__body {
+    flex: 1;
+}
+
+/* Slide-down animation per Alpine.js */
+.toast-enter {
+    animation: toast-slidein 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-leave {
+    animation: toast-slideout 0.35s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+@keyframes toast-slidein {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-slideout {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(20px); }
+}
+
+/* ============================================================
+   Spacing Utilities
+   ============================================================ */
 .space-y-4 > * + * { margin-top: 16px; }
 .space-y-5 > * + * { margin-top: 20px; }
 .space-y-6 > * + * { margin-top: 24px; }
@@ -1216,28 +1358,27 @@ input:-webkit-autofill:focus {
 }
 
 /* ============================================================
-   Spinner
+   Password Strength — Label "Stark"
    ============================================================ */
-.spinner {
-    --spinner-size: 14px;
 
-    display: inline-block;
-    width: var(--spinner-size);
-    height: var(--spinner-size);
-    border-radius: 9999px;
-    border: 2px solid currentColor;
-    border-right-color: transparent;
-    animation: spin 0.8s linear infinite;
-    will-change: transform;
+.pw-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--teal-deep);
+    opacity: 0;
+    transition: opacity 0.4s var(--ease-out);
 }
 
-.spinner[data-size="sm"] { --spinner-size: 10px; }
-.spinner[data-size="md"] { --spinner-size: 14px; }
-.spinner[data-size="lg"] { --spinner-size: 18px; }
-.spinner[data-size="xl"] { --spinner-size: 28px; }
+.pw-label--visible {
+    opacity: 1;
+}
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+.pw-label__icon {
+    width: 16px;
+    height: 16px;
 }
 
 /* ============================================================
