@@ -4,7 +4,7 @@
 
 {% block content %}
   <div class="max-w-md mx-auto">
-    <div class="bg-white p-6 rounded shadow">
+    <div class="card">
       <h2 class="text-xl font-semibold mb-4">Anmeldung</h2>
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -19,15 +19,15 @@
         <input name="next" type="hidden" value="{{ next or '' }}">
         <div>
           <label class="block text-sm">Benutzername oder E-Mail</label>
-          <input name="username" class="w-full border rounded p-2" />
+          <input name="username" class="input" />
         </div>
         <div>
           <label class="block text-sm">Passwort</label>
-          <input name="password" type="password" class="w-full border rounded p-2" />
+          <input name="password" type="password" class="input" />
         </div>
         <div>
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Anmelden</button>
-          <a class="ml-4 text-sm text-gray-600" href="{{ url_for('auth.register') }}">Registrieren</a>
+          <button type="submit" class="btn btn-primary">Anmelden</button>
+          <a class="ml-4 text-sm muted" href="{{ url_for('auth.register') }}">Registrieren</a>
         </div>
       </form>
     </div>

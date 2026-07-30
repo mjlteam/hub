@@ -93,6 +93,13 @@ def create_app():
                 except Exception as e:
                     print(f"Failed initializing module {mod_name}: {e}")
 
+    # provide helper functions to templates
+    @app.context_processor
+    def inject_now():
+        from datetime import datetime
+
+        return {"now": datetime.utcnow}
+
     return app
 
 
