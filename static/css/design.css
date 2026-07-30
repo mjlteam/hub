@@ -220,6 +220,7 @@ a:hover {
 
 .btn:hover {
     transform: translateY(-1px);
+    opacity: 1;
 }
 
 .btn:active {
@@ -252,13 +253,6 @@ a:hover {
 
 .btn-primary:active {
     background: #171717;
-}
-
-/* ---- Feste helle Blau-Farbe für Button-Text ---- */
-.btn-primary .btn-text-blue {
-    color: #a6cdea;
-    font-weight: 700;
-    letter-spacing: 0.02em;
 }
 
 /* Secondary */

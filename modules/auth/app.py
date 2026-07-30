@@ -50,7 +50,7 @@ def register():
         return redirect(url_for('hub.hub'))
     if request.method == 'POST':
         username = request.form.get('username')
-        email = request.form.get('email')
+        email = request.form.get('email') or None
         password = request.form.get('password')
         if not username or not password:
             flash('Benutzername und Passwort sind erforderlich', 'error')

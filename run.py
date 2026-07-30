@@ -73,13 +73,9 @@ def create_app():
 
             # If the auth module was just loaded, set up the user loader
             if pkg.endswith('auth'):
-                try:
-
-                    @login_manager.user_loader
-                    def load_user(user_id):
-                        return User.query.get(int(user_id))
-                except Exception:
-                    pass
+                @login_manager.user_loader
+                def load_user(user_id):
+                    return User.query.get(int(user_id))
 
             if hasattr(mod, 'bp'):
                 try:

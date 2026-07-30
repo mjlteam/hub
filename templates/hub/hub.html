@@ -3,44 +3,7 @@
 {% block title %}Hub — MJL-Team{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-
-    {# --- Page Heading --- #}
-    <section>
-        <h1>Übersicht</h1>
-        <p class="body-large text-secondary" style="margin-top: 8px;">Willkommen im Hub. Hier kommen alle Module zusammen.</p>
-    </section>
-
-    {# --- Grid: Module & Status --- #}
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="card">
-            <h3 style="margin-bottom: 12px;">Module</h3>
-            <ul class="space-y-4 body-small" style="list-style: none; color: var(--text-secondary);">
-                <li style="display: flex; align-items: center; gap: 8px;">
-                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal);"></span>
-                    Hub
-                </li>
-                <li style="display: flex; align-items: center; gap: 8px;">
-                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal);"></span>
-                    Auth
-                </li>
-            </ul>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 12px;">Status</h3>
-            <div class="space-y-4">
-                <div>
-                    <p class="label text-tertiary">Server</p>
-                    <p class="body-small" style="margin-top: 2px;">{{ request.host }}</p>
-                </div>
-                <div>
-                    <p class="label text-tertiary">Angemeldet als</p>
-                    <p class="body-small" style="margin-top: 2px;">{{ current_user.username }}</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
+<div class="fade-in" style="display: flex; align-items: center; justify-content: center; min-height: 40vh;">
+    <h2 class="display" style="font-size: clamp(1.5rem, 3vw, 2rem); color: var(--ink);">Willkommen</h2>
 </div>
 {% endblock %}

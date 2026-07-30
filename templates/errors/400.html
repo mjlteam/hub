@@ -5,10 +5,10 @@
 {% block content %}
 <div class="auth-container">
     <div class="auth-card" style="text-align: center;">
-        <p class="display" style="font-size: 5rem; margin-bottom: 8px; font-family: var(--font-serif);">400</p>
-        <h2 style="margin-bottom: 8px; font-family: var(--font-sans); font-weight: 600;">Ungültige Anfrage</h2>
-        <p class="text-secondary" style="margin-bottom: 24px; font-family: var(--font-sans);">Die Anfrage konnte nicht verstanden werden.</p>
-        <a href="{{ url_for('hub.hub') if current_user.is_authenticated else url_for('auth.login') }}" class="btn btn-primary btn-lg"><span class="btn-text-blue">Zurück</span></a>
+        <p class="display" style="font-size: 5rem; margin-bottom: 8px;">400</p>
+        <h2 style="margin-bottom: 8px;">Ungültige Anfrage</h2>
+        <p class="text-secondary" style="margin-bottom: 24px;">Die Anfrage konnte nicht verstanden werden.</p>
+        <a href="{{ url_for('hub.hub') if current_user.is_authenticated else url_for('auth.login') }}" class="btn btn-primary btn-lg"><span>Zurück</span></a>
     </div>
 </div>
 {% endblock %}
