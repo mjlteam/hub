@@ -1,35 +1,54 @@
 {% extends "base.html" %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Anmelden — MJL-Team{% endblock %}
 
 {% block content %}
-  <div class="max-w-md mx-auto">
-    <div class="card">
-      <h2 class="text-xl font-semibold mb-4">Anmeldung</h2>
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="space-y-2 mb-4">
-          {% for category, msg in messages %}
-            <div class="text-sm text-red-600">{{ msg }}</div>
-          {% endfor %}
+<div class="auth-container" x-data="{ loaded: false, submitting: false }" x-init="setTimeout(() => loaded = true, 400)">
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <h2>Anmelden</h2>
         </div>
-      {% endif %}
-      {% endwith %}
-      <form method="post" class="space-y-4">
-        <input name="next" type="hidden" value="{{ next or '' }}">
-        <div>
-          <label class="block text-sm">Benutzername oder E-Mail</label>
-          <input name="username" class="input" />
+
+        <div class="skel-stack">
+            <div class="card card-padded skel-overlay" x-show="!loaded" x-transition.opacity.duration.200ms>
+                <div class="skel skel-label"></div>
+                <div class="skel skel-input"></div>
+                <div class="skel skel-label"></div>
+                <div class="skel skel-input"></div>
+                <div class="skel skel-btn"></div>
+            </div>
+
+            <div class="card card-padded" x-show="loaded" x-cloak x-transition.opacity.duration.300ms>
+                <form method="post" class="space-y-5" @submit="submitting = true">
+                    <input name="next" type="hidden" value="{{ next or '' }}">
+
+                    <div class="form-group">
+                        <label for="username" class="form-label">Benutzername oder E-Mail</label>
+                        <input id="username" name="username" type="text" class="input" placeholder="max.mustermann" autocomplete="username" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Passwort</label>
+                        <input id="password" name="password" type="password" class="input" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="padding: 12px 18px; font-size: 0.9375rem;">
+                        <span x-show="!submitting">Anmelden</span>
+                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
+                            <span class="thinking-ring"></span>
+                            Lädt…
+                        </span>
+                    </button>
+                </form>
+            </div>
         </div>
-        <div>
-          <label class="block text-sm">Passwort</label>
-          <input name="password" type="password" class="input" />
+
+        <div class="auth-footer">
+            Noch kein Konto?
+            <a href="{{ url_for('auth.register') }}">Jetzt registrieren</a>
         </div>
-        <div>
-          <button type="submit" class="btn btn-primary">Anmelden</button>
-          <a class="ml-4 text-sm muted" href="{{ url_for('auth.register') }}">Registrieren</a>
-        </div>
-      </form>
+
     </div>
-  </div>
+</div>
 {% endblock %}

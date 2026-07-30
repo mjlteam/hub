@@ -25,6 +25,24 @@ def login():
     return render_template('auth/login.html', next=next_url)
 
 
+@bp.route('/login-split', methods=['GET', 'POST'])
+def login_split():
+    # redirect authenticated users to hub
+    if current_user.is_authenticated:
+        return redirect(url_for('hub.hub'))
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter((User.username == username) | (User.email == username)).first()
+        if user and user.check_password(password):
+            login_user(user)
+            next_url = request.args.get('next') or request.form.get('next')
+            return redirect(next_url or url_for('hub.hub'))
+        flash('Ungültiger Benutzername oder Passwort', 'error')
+    next_url = request.args.get('next')
+    return render_template('auth/login-split.html', next=next_url)
+
+
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     # redirect authenticated users to hub

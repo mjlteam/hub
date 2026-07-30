@@ -1,29 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}MJL-Team{% endblock %}
-
-{% block header %}MJL-Team{% endblock %}
+{% block title %}Hub — MJL-Team{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-  <section class="card">
-    <h2 class="text-xl font-semibold mb-2">Übersicht</h2>
-    <p class="text-sm muted">Willkommen im Hub. Hier kommen Module zusammen.</p>
-  </section>
 
-  <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="card">
-      <h3 class="font-medium">Module</h3>
-      <ul class="mt-2 text-sm muted">
-        <li>- Hub</li>
-        <li>- auth</li>
-      </ul>
-    </div>
+    {# --- Page Heading --- #}
+    <section>
+        <h1>Übersicht</h1>
+        <p class="body-large text-secondary" style="margin-top: 8px;">Willkommen im Hub. Hier kommen alle Module zusammen.</p>
+    </section>
 
-    <div class="card">
-      <h3 class="font-medium">Status</h3>
-      <p class="mt-2 text-sm muted">Server läuft auf {{ request.host }}.</p>
-    </div>
-  </section>
+    {# --- Grid: Module & Status --- #}
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card">
+            <h3 style="margin-bottom: 12px;">Module</h3>
+            <ul class="space-y-4 body-small" style="list-style: none; color: var(--text-secondary);">
+                <li style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal);"></span>
+                    Hub
+                </li>
+                <li style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal);"></span>
+                    Auth
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 12px;">Status</h3>
+            <div class="space-y-4">
+                <div>
+                    <p class="label text-tertiary">Server</p>
+                    <p class="body-small" style="margin-top: 2px;">{{ request.host }}</p>
+                </div>
+                <div>
+                    <p class="label text-tertiary">Angemeldet als</p>
+                    <p class="body-small" style="margin-top: 2px;">{{ current_user.username }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </div>
 {% endblock %}

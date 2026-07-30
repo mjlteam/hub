@@ -3,13 +3,12 @@
 {% block title %}Interner Serverfehler (500){% endblock %}
 
 {% block content %}
-  <div class="max-w-xl mx-auto">
-    <div class="card">
-      <h1 class="text-2xl font-semibold">500 — Interner Serverfehler</h1>
-      <p class="muted mt-2">Ein unerwarteter Fehler ist aufgetreten. Versuche es später erneut.</p>
-      <div class="mt-4">
-        <a href="/" class="btn btn-secondary">Zur Startseite</a>
-      </div>
+<div class="auth-container">
+    <div class="auth-card" style="text-align: center;">
+        <p class="display" style="font-size: 5rem; margin-bottom: 8px;">500</p>
+        <h2 style="margin-bottom: 8px;">Interner Serverfehler</h2>
+        <p class="text-secondary" style="margin-bottom: 24px;">Ein unerwarteter Fehler ist aufgetreten. Versuche es später erneut.</p>
+        <a href="{{ url_for('hub.hub') if current_user.is_authenticated else url_for('auth.login') }}" class="btn btn-secondary">Zur Startseite</a>
     </div>
-  </div>
+</div>
 {% endblock %}

@@ -1,38 +1,113 @@
 {% extends "base.html" %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Registrieren — MJL-Team{% endblock %}
 
 {% block content %}
-  <div class="max-w-md mx-auto">
-    <div class="card">
-      <h2 class="text-xl font-semibold mb-4">Registrierung</h2>
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="space-y-2 mb-4">
-          {% for category, msg in messages %}
-            <div class="text-sm text-red-600">{{ msg }}</div>
-          {% endfor %}
+<div class="auth-container" x-data="registerForm()" x-init="setTimeout(() => loaded = true, 400)">
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <h2>Registrieren</h2>
         </div>
-      {% endif %}
-      {% endwith %}
-      <form method="post" class="space-y-4">
-        <div>
-          <label class="block text-sm">Benutzername</label>
-          <input name="username" class="input" />
+
+        <div class="skel-stack">
+            <div class="card card-padded skel-overlay" x-show="!loaded" x-transition.opacity.duration.200ms>
+                <div class="skel skel-label"></div>
+                <div class="skel skel-input"></div>
+                <div class="skel skel-label"></div>
+                <div class="skel skel-input"></div>
+                <div class="skel skel-label"></div>
+                <div class="skel skel-input"></div>
+                <div class="skel skel-btn"></div>
+            </div>
+
+            <div class="card card-padded" x-show="loaded" x-cloak x-transition.opacity.duration.300ms>
+                <form method="post" class="space-y-5" @submit="submitting = true">
+                    <div class="form-group">
+                        <label for="username" class="form-label">Benutzername</label>
+                        <input id="username" name="username" type="text" class="input" placeholder="max.mustermann" autocomplete="username" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            E-Mail
+                            <span class="form-label-optional">(optional)</span>
+                        </label>
+                        <input id="email" name="email" type="email" class="input" placeholder="max@beispiel.de" autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Passwort</label>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            class="input"
+                            placeholder="••••••••"
+                            autocomplete="new-password"
+                            required
+                            x-model="password"
+                            @input="checkStrength()"
+                        >
+
+                        <div class="pw-meter">
+                            <template x-for="i in 4" :key="i">
+                                <div
+                                    class="pw-meter__bar"
+                                    :class="{
+                                        'pw-meter__bar--active': i <= strength,
+                                        'pw-meter__bar--warn': i <= strength && strength < 3
+                                    }"
+                                ></div>
+                            </template>
+                        </div>
+                        <p class="pw-meter__label" x-text="label" :style="strength >= 4 ? 'color: #0d0d0d; font-weight: 500;' : ''"></p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="padding: 12px 18px; font-size: 0.9375rem;">
+                        <span x-show="!submitting">Konto erstellen</span>
+                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
+                            <span class="thinking-ring"></span>
+                            Lädt…
+                        </span>
+                    </button>
+                </form>
+            </div>
         </div>
-        <div>
-          <label class="block text-sm">E-Mail (optional)</label>
-          <input name="email" class="input" />
+
+        <div class="auth-footer">
+            Bereits ein Konto?
+            <a href="{{ url_for('auth.login') }}">Jetzt anmelden</a>
         </div>
-        <div>
-          <label class="block text-sm">Passwort</label>
-            <input name="password" type="password" class="input" />
-            <p class="text-xs muted mt-1">Das Passwort muss mindestens 8 Zeichen lang sein und mindestens einen Großbuchstaben, einen Kleinbuchstaben, eine Ziffer und ein Sonderzeichen enthalten. Es darf nicht den Benutzernamen enthalten.</p>
-        </div>
-        <div>
-          <button type="submit" class="btn btn-accent">Registrieren</button>
-        </div>
-      </form>
+
     </div>
-  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function registerForm() {
+    return {
+        loaded: false,
+        submitting: false,
+        password: '',
+        strength: 0,
+        label: '',
+        checkStrength() {
+            let score = 0;
+            const p = this.password || '';
+            if (p.length >= 8) score++;
+            if (/[A-Z]/.test(p)) score++;
+            if (/[a-z]/.test(p)) score++;
+            if (/[0-9]/.test(p) || /[^A-Za-z0-9]/.test(p)) score++;
+            this.strength = score;
+            if (score === 0) this.label = '';
+            else if (score === 1) this.label = 'Schwach';
+            else if (score === 2) this.label = 'Mittel';
+            else if (score === 3) this.label = 'Stark';
+            else this.label = 'Sehr stark';
+        }
+    };
+}
+</script>
 {% endblock %}
