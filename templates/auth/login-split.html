@@ -32,7 +32,7 @@
                     <div class="skel skel-btn"></div>
                 </div>
 
-                <div x-show="loaded" x-cloak x-transition.opacity.duration.300ms>
+                <div>
                     <form method="post" @submit="submitting = true">
                         <input name="next" type="hidden" value="{{ next or '' }}">
 

@@ -19,7 +19,7 @@
                 <div class="skel skel-btn"></div>
             </div>
 
-            <div class="card card-padded" x-show="loaded" x-cloak x-transition.opacity.duration.300ms>
+            <div class="card card-padded">
                 <form method="post" class="space-y-5" @submit="submitting = true">
                     <input name="next" type="hidden" value="{{ next or '' }}">
 
