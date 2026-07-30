@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}MJL - Hub{% endblock %}
+
+{% block header %}Hub{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <section class="bg-white shadow rounded-lg p-6">
+    <h2 class="text-xl font-semibold mb-2">Übersicht</h2>
+    <p class="text-sm text-gray-600">Willkommen im Hub. Hier kommen Module zusammen.</p>
+  </section>
+
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white shadow rounded-lg p-4">
+      <h3 class="font-medium">Module</h3>
+      <ul class="mt-2 text-sm text-gray-700">
+        <li>- hello</li>
+      </ul>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-4">
+      <h3 class="font-medium">Status</h3>
+      <p class="mt-2 text-sm text-gray-700">Server läuft auf {{ request.host }}.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}
