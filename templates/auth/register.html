@@ -55,19 +55,17 @@
                                 <div
                                     class="pw-meter__bar"
                                     :class="{
-                                        'pw-meter__bar--active': i <= strength,
-                                        'pw-meter__bar--warn': i <= strength && strength < 3
+                                        'pw-meter__bar--active': i <= strength
                                     }"
                                 ></div>
                             </template>
                         </div>
-                        <p class="pw-meter__label" x-text="label" :style="strength >= 4 ? 'color: #0d0d0d; font-weight: 500;' : ''"></p>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg btn-block">
                         <span x-show="!submitting">Konto erstellen</span>
                         <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
-                            <span class="thinking-ring"></span>
+                            <span class="spinner" data-size="md"></span>
                             Lädt…
                         </span>
                     </button>
@@ -91,7 +89,6 @@ function registerForm() {
         submitting: false,
         password: '',
         strength: 0,
-        label: '',
         checkStrength() {
             let score = 0;
             const p = this.password || '';
@@ -100,11 +97,6 @@ function registerForm() {
             if (/[a-z]/.test(p)) score++;
             if (/[0-9]/.test(p) || /[^A-Za-z0-9]/.test(p)) score++;
             this.strength = score;
-            if (score === 0) this.label = '';
-            else if (score === 1) this.label = 'Schwach';
-            else if (score === 2) this.label = 'Mittel';
-            else if (score === 3) this.label = 'Stark';
-            else this.label = 'Sehr stark';
         }
     };
 }
