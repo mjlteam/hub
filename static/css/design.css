@@ -336,6 +336,16 @@ a:hover {
 }
 
 /* --- Inputs --- */
+
+/* Browser autofill override — kein gelbes Highlighting */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px var(--bg) inset;
+    -webkit-text-fill-color: var(--ink);
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -360,17 +370,16 @@ a:hover {
 
 .input {
     width: 100%;
-    padding: 12px 14px;
+    padding: 11px 14px;
     font-family: var(--font-sans);
     font-size: 0.9375rem;
     color: var(--ink);
     background: var(--bg);
-    border: 1px solid var(--border-hairline);
+    border: 2px solid var(--border-hairline);
     border-radius: var(--radius);
     transition:
         border-color 0.2s var(--ease-out),
         box-shadow 0.2s var(--ease-out),
-        background-color 0.2s var(--ease-out),
         transform 0.2s var(--ease-out);
     -webkit-appearance: none;
     appearance: none;
@@ -379,11 +388,6 @@ a:hover {
 .input::placeholder {
     color: var(--text-tertiary);
     transition: color 0.2s var(--ease-out);
-}
-
-.input:hover {
-    border-color: #d0d0d0;
-    background: #fafafa;
 }
 
 .input:focus {
@@ -544,6 +548,8 @@ a:hover {
 
 /* --- Header --- */
 .site-header {
+    position: relative;
+    z-index: 1;
     background: var(--bg);
     border-bottom: 1px solid var(--border-hairline);
 }
@@ -621,6 +627,8 @@ a:hover {
 
 /* --- Footer --- */
 .site-footer {
+    position: relative;
+    z-index: 1;
     background: var(--bg);
     border-top: 1px solid var(--border-hairline);
     margin-top: auto;
@@ -651,6 +659,8 @@ a:hover {
 
 /* --- Main Content --- */
 .main-content {
+    position: relative;
+    z-index: 1;
     flex: 1;
     width: 100%;
     max-width: 1200px;
