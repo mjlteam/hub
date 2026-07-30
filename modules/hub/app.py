@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 
-bp = Blueprint('hub', __name__, url_prefix='/hub')
+bp = Blueprint('hub', __name__, url_prefix='/')
 
 
 @bp.route('/')

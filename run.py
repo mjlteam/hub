@@ -16,12 +16,6 @@ def create_app():
     # default minimal route (fallback)
     bp = Blueprint('main', __name__)
 
-
-    @bp.route('/')
-    def index():
-        return redirect("/hub")
-
-
     app.register_blueprint(bp)
 
     # project root
