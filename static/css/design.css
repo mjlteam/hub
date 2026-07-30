@@ -182,63 +182,121 @@ a:hover {
     }
 }
 
-/* --- Buttons --- */
+/* --- Buttons (Astryx-inspired) --- */
 .btn {
+    --btn-h: 32px;
+    --btn-px: 12px;
+    --btn-gap: 8px;
+
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 10px 18px;
+    gap: var(--btn-gap);
+
+    height: var(--btn-h);
+    padding-inline: var(--btn-px);
+
+    border: 0;
+    border-radius: 12px;
+
     font-family: var(--font-sans);
-    font-size: 0.9375rem;
+    font-size: 14px;
     font-weight: 500;
-    line-height: 1;
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition:
-        background-color var(--duration-fast) var(--ease-out),
-        border-color var(--duration-fast) var(--ease-out),
-        box-shadow var(--duration-fast) var(--ease-out),
-        transform var(--duration-fast) var(--ease-out);
-    text-decoration: none;
+    line-height: 20px;
+
     white-space: nowrap;
     user-select: none;
+    cursor: pointer;
+    text-decoration: none;
     -webkit-tap-highlight-color: transparent;
+
+    transition:
+        background-color 175ms ease,
+        box-shadow 175ms ease,
+        transform 130ms ease,
+        opacity 175ms ease;
+}
+
+.btn:hover {
+    background: #333333;
 }
 
 .btn:active {
-    transform: scale(0.98);
+    transform: translateY(1px);
 }
 
 .btn:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(13,13,13,0.15);
+    box-shadow:
+        0 0 0 2px #ffffff,
+        0 0 0 4px #737373;
+}
+
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Primary */
 .btn-primary {
-    background: var(--ink);
+    background: #262626;
     color: #ffffff;
 }
 
 .btn-primary:hover {
-    background: var(--soft-ink);
+    background: #333333;
+}
+
+.btn-primary:active {
+    background: #171717;
 }
 
 /* Secondary */
 .btn-secondary {
-    background: var(--bg);
-    color: var(--ink);
-    border: 1px solid var(--border-hairline);
+    background: #f1f1f1;
+    color: #171717;
 }
 
 .btn-secondary:hover {
-    background: var(--surface-mist);
-    border-color: #d4d4d4;
+    background: #e5e5e5;
 }
 
-/* Brand Accent */
+.btn-secondary:active {
+    background: #dcdcdc;
+}
+
+/* Tertiary / Ghost */
+.btn-ghost {
+    background: transparent;
+    color: #262626;
+}
+
+.btn-ghost:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.btn-ghost:active {
+    background: rgba(0,0,0,0.1);
+}
+
+/* Danger */
+.btn-danger {
+    background: #a50c25;
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background: #8f0a20;
+}
+
+.btn-danger:active {
+    background: #7a081a;
+}
+
+/* Brand Accent (Teal) */
 .btn-accent {
     background: var(--teal);
     color: #ffffff;
@@ -248,54 +306,33 @@ a:hover {
     background: var(--teal-deep);
 }
 
-/* Danger */
-.btn-danger {
-    background: var(--error);
-    color: #ffffff;
+.btn-accent:active {
+    background: #086b4f;
 }
 
-.btn-danger:hover {
-    background: #d9363b;
+/* Sizes */
+.btn-sm {
+    --btn-h: 28px;
+    --btn-px: 10px;
+    font-size: 13px;
 }
 
-/* Ghost */
-.btn-ghost {
-    background: transparent;
-    color: var(--text-secondary);
-}
+/* default (md) is 32px / 12px / 14px */
 
-.btn-ghost:hover {
-    background: var(--surface-pearl);
-    color: var(--ink);
+.btn-lg {
+    --btn-h: 36px;
+    --btn-px: 14px;
+    font-size: 14px;
 }
 
 /* Pill variant */
 .btn-pill {
-    border-radius: var(--radius-pill);
-}
-
-/* Button sizes */
-.btn-sm {
-    padding: 6px 14px;
-    font-size: 0.8125rem;
-}
-
-.btn-lg {
-    padding: 14px 24px;
-    font-size: 1.0625rem;
-    border-radius: var(--radius-lg);
+    border-radius: 9999px;
 }
 
 /* Full width */
 .btn-block {
     width: 100%;
-}
-
-/* Disabled */
-.btn:disabled,
-.btn.disabled {
-    opacity: 0.45;
-    pointer-events: none;
 }
 
 /* --- Inputs --- */
@@ -480,8 +517,7 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
     padding: 16px 24px;
 }
 
@@ -977,10 +1013,9 @@ a:hover {
 }
 
 /* ============================================================
-   Skeleton Placeholder Bars
+   Skeleton Loader (reines CSS, kein JS)
    ============================================================ */
 
-/* Stack: Skeleton als Overlay über echtem Content – kein Layout-Sprung */
 .skel-stack {
     position: relative;
 }
@@ -988,15 +1023,15 @@ a:hover {
 .skel-overlay {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 2;
     background: #ffffff;
     border-radius: var(--radius-lg);
     pointer-events: none;
-    animation: skel-fadeout 0.25s ease-out 0.4s forwards;
+    animation: skel-fadeout 0.25s ease-out 0.85s forwards;
 }
 
 @keyframes skel-fadeout {
-    0%   { opacity: 1; visibility: visible; }
+    0%   { opacity: 1; }
     100% { opacity: 0; visibility: hidden; }
 }
 
@@ -1007,21 +1042,13 @@ a:hover {
     overflow: hidden;
 }
 
-/* Shimmer-Strich läuft 3× über den Skeleton */
 .skel::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        transparent 40%,
-        rgba(255,255,255,0.5) 50%,
-        transparent 60%,
-        transparent 100%
-    );
+    background: linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%, transparent 100%);
     transform: translateX(-100%);
-    animation: skel-sweep 0.2s linear 3;
+    animation: skel-sweep 0.22s linear 4;
     pointer-events: none;
     border-radius: inherit;
 }
@@ -1031,31 +1058,9 @@ a:hover {
     100% { transform: translateX(100%); }
 }
 
-.skel-h {
-    height: 22px;
-    width: 45%;
-    margin-bottom: 20px;
-}
-
-.skel-label {
-    height: 13px;
-    width: 30%;
-    margin-bottom: 6px;
-}
-
-.skel-input {
-    height: 44px;
-    width: 100%;
-    margin-bottom: 18px;
-    border-radius: var(--radius);
-}
-
-.skel-btn {
-    height: 46px;
-    width: 100%;
-    border-radius: var(--radius);
-    margin-top: 4px;
-}
+.skel-label { height: 13px; width: 30%; margin-bottom: 6px; }
+.skel-input { height: 44px; width: 100%; margin-bottom: 18px; border-radius: var(--radius); }
+.skel-btn   { height: 46px; width: 100%; border-radius: var(--radius); margin-top: 4px; }
 
 /* ============================================================
    Alpine.js x-cloak

@@ -45,7 +45,7 @@ def create_app():
     login_manager.init_app(app)
     # where to redirect for login
     login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Bitte melde dich an, um diese Seite zu sehen.'
+    login_manager.login_message = None
 
     # project root
     project_root = Path(__file__).resolve().parent
