@@ -243,6 +243,18 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('hub.hub'))
 
+    # Share-Link: ?key=xxx → Auto-Validierung
+    share_key = request.args.get('key', '').strip()
+    if share_key and request.method == 'GET':
+        key = ServerKey.query.filter_by(key_value=share_key).first()
+        if key and key.active and key.uses_left > 0:
+            session[REGISTRATION_KEY_SESSION] = key.id
+            flash(f'Server-Key "{key.name}" wurde bestätigt. Du kannst dich jetzt registrieren.', 'success')
+            return redirect(url_for('auth.register'))
+        else:
+            flash('Dieser Share-Link ist ungültig oder der Key ist aufgebraucht.', 'error')
+            return redirect(url_for('auth.register'))
+
     verified_key = _get_verified_registration_key()
 
     if request.method == 'POST' and request.form.get('action') == 'clear_key':

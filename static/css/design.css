@@ -2085,6 +2085,144 @@ input:-webkit-autofill:focus {
 }
 
 /* ============================================================
+   Toggle Switch (ersetzt Checkboxen für Aktiv/Inaktiv)
+   ============================================================ */
+.toggle-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.toggle-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-switch-track {
+    width: 44px;
+    height: 26px;
+    border-radius: 9999px;
+    background: var(--surface-cloud);
+    border: 2px solid var(--border-hairline);
+    position: relative;
+    flex-shrink: 0;
+    transition: background-color 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+}
+.toggle-switch input:checked + .toggle-switch-track {
+    background: var(--teal);
+    border-color: var(--teal);
+}
+.toggle-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    transition: transform 0.25s var(--ease-out);
+}
+.toggle-switch input:checked + .toggle-switch-track .toggle-switch-thumb {
+    transform: translateX(18px);
+}
+[data-theme="dark"] .toggle-switch-track {
+    background: #30302f;
+    border-color: rgba(255,255,255,0.1);
+}
+[data-theme="dark"] .toggle-switch input:checked + .toggle-switch-track {
+    background: var(--teal);
+    border-color: var(--teal);
+}
+
+/* Number-Input-Pfeile ausblenden */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Copy-Button Feedback */
+.copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-soft);
+    background: var(--surface-mist);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+.copy-btn:hover {
+    background: var(--surface-pearl);
+    color: var(--ink);
+    border-color: var(--border-hairline);
+}
+.copy-btn.copied {
+    background: var(--teal-soft);
+    color: var(--teal-deep);
+    border-color: var(--teal);
+}
+[data-theme="dark"] .copy-btn {
+    background: #292928;
+    border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .copy-btn:hover {
+    background: #30302f;
+}
+[data-theme="dark"] .copy-btn.copied {
+    background: rgba(82, 156, 202, 0.14);
+    color: #529cca;
+    border-color: #529cca;
+}
+
+/* Share-Link Badge */
+.share-link-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--surface-mist);
+    border: 1px solid var(--border-soft);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.15s var(--ease-out);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.share-link-badge:hover {
+    background: var(--surface-pearl);
+}
+[data-theme="dark"] .share-link-badge {
+    background: #292928;
+    border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .share-link-badge:hover {
+    background: #30302f;
+}
+
+/* ============================================================
    Sidebar Profile (bottom of sidebar) — Dropdown opens upward
    ============================================================ */
 .sidebar-profile {
