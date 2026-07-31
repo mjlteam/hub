@@ -27,6 +27,12 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     {% block head %}{% endblock %}
 </head>
+<<<<<<< HEAD
+=======
+<body class="{% block body_class %}font-sans antialiased{% endblock %}">
+
+{% if not request.headers.get('HX-Request') %}
+>>>>>>> b5fca9e (Dark mode etc)
 
 <body class="{% block body_class %}font-sans antialiased{% endblock %}"
     style="background: var(--bg); color: var(--ink);">
@@ -36,16 +42,28 @@
     {% if current_user.is_authenticated %}
 
     <!-- ========== SIDEBAR + CONTENT ========== -->
+<<<<<<< HEAD
     <div class="app-shell" x-data="{ sidebarOpen: false }">
         <div class="sidebar-overlay" :class="{ 'sidebar-overlay--visible': sidebarOpen }" @click="sidebarOpen = false">
         </div>
+=======
+    <div class="app-shell" x-data="{ sidebarOpen: false, profileOpen: false, dark: localStorage.getItem('theme') === 'dark' }" x-init="$watch('dark', v => { const html = document.documentElement; html.setAttribute('data-theme', v ? 'dark' : 'light'); localStorage.setItem('theme', v ? 'dark' : 'light'); window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: v ? 'dark' : 'light' } })); })">
+        <div class="sidebar-overlay" :class="{ 'sidebar-overlay--visible': sidebarOpen }" @click="sidebarOpen = false"></div>
+>>>>>>> b5fca9e (Dark mode etc)
 
-        <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
+        <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }" @click.outside="profileOpen = false">
             <div class="sidebar-brand">
-                <a href="{{ url_for('hub.hub') }}" style="text-decoration: none; color: inherit;">MJL-Team</a>
+                <a href="{{ url_for('hub.hub') }}"
+                   hx-get="{{ url_for('hub.hub') }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+                   class="sidebar-brand-text">MJL-Team</a>
+                <button class="sidebar-theme-btn" @click="dark = !dark" :aria-label="dark ? 'Light Mode' : 'Dark Mode'" :title="dark ? 'Light Mode' : 'Dark Mode'">
+                    <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="{{ url_for('hub.hub') }}"
+<<<<<<< HEAD
                     class="sidebar-link{% if request.endpoint == 'hub.hub' %} sidebar-link--active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7" />
@@ -74,6 +92,25 @@
                         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
                     Benutzer
+=======
+                   hx-get="{{ url_for('hub.hub') }}"
+                   class="sidebar-link{% if request.endpoint == 'hub.hub' %} sidebar-link--active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Hub</span>
+                </a>
+                {% if current_user.role == 10 %}
+                <a href="{{ url_for('admin.admin_dashboard') }}"
+                   hx-get="{{ url_for('admin.admin_dashboard') }}"
+                   class="sidebar-link{% if request.endpoint == 'admin.admin_dashboard' %} sidebar-link--active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.admin_users') }}"
+                   hx-get="{{ url_for('admin.admin_users') }}"
+                   class="sidebar-link{% if request.endpoint == 'admin.admin_users' %} sidebar-link--active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Benutzer</span>
+>>>>>>> b5fca9e (Dark mode etc)
                 </a>
                 <a href="{{ url_for('admin.admin_keys') }}"
                     class="sidebar-link{% if request.endpoint == 'admin.admin_keys' %} sidebar-link--active{% endif %}">
@@ -87,10 +124,11 @@
             </nav>
 
             <!-- Profile section at bottom of sidebar -->
-            <div class="sidebar-profile" x-data="{ open: false }">
-                <button class="sidebar-profile-btn" @click="open = !open" aria-label="Benutzermenü">
+            <div class="sidebar-profile">
+                <button class="sidebar-profile-btn" @click="profileOpen = !profileOpen" :aria-expanded="profileOpen" aria-label="Benutzermenü">
                     <span class="sidebar-profile-avatar">{{ current_user.username[0]|upper }}</span>
                     <span class="sidebar-profile-name">{{ current_user.username }}</span>
+<<<<<<< HEAD
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         style="margin-left: auto; transition: transform 0.2s;"
                         :style="open ? 'transform: rotate(180deg)' : ''">
@@ -116,6 +154,20 @@
                             <line x1="21" y1="12" x2="9" y2="12" />
                         </svg>
                         Abmelden
+=======
+                    <svg class="sidebar-profile-chevron" :class="{ 'rotated': profileOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="sidebar-profile-menu" x-show="profileOpen" x-transition x-cloak>
+                    <a href="{{ url_for('hub.settings') }}" class="sidebar-profile-item"
+                       hx-get="{{ url_for('hub.settings') }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <span>Einstellungen</span>
+                    </a>
+                    <div class="sidebar-profile-divider"></div>
+                    <a href="{{ url_for('auth.logout') }}" class="sidebar-profile-item sidebar-profile-item--danger">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        <span>Abmelden</span>
+>>>>>>> b5fca9e (Dark mode etc)
                     </a>
                 </div>
             </div>
@@ -123,7 +175,8 @@
 
         <div class="main-area">
             <div class="mobile-topbar">
-                <a href="{{ url_for('hub.hub') }}" class="mobile-topbar-brand">MJL-Team</a>
+                <a href="{{ url_for('hub.hub') }}" class="mobile-topbar-brand"
+                   hx-get="{{ url_for('hub.hub') }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">MJL-Team</a>
                 <button class="btn btn-ghost btn-sm" @click="sidebarOpen = !sidebarOpen" aria-label="Menü">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6" />
@@ -132,6 +185,7 @@
                     </svg>
                 </button>
             </div>
+<<<<<<< HEAD
             {% else %}
             <!-- ========== UNAUTHENTICATED: HEADER ========== -->
             <header class="site-header">
@@ -168,6 +222,33 @@
                     </div>
                 </div>
             </footer>-->
+=======
+
+    {% else %}
+    <!-- ========== UNAUTHENTICATED: HEADER ========== -->
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="/" class="header-brand" aria-label="MJL-Team">MJL-Team</a>
+            <nav class="header-nav">
+                <button id="theme-toggle" class="header-theme-btn" aria-label="Theme umschalten" title="Light/Dark Mode">
+                    <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm">Anmelden</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Registrieren</a>
+            </nav>
+        </div>
+    </header>
+    {% endif %}
+
+    {# ========== SHARED CONTENT AREA ========== #}
+    <main id="main-content" class="main-content">
+        {% include "toasts.html" %}
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if current_user.is_authenticated %}
+>>>>>>> b5fca9e (Dark mode etc)
         </div><!-- /main-area -->
     </div><!-- /app-shell -->
     {% else %}
@@ -189,6 +270,7 @@
     <script src="{{ url_for('static', filename='js/cursor-dots.js') }}?v={{ version or 'dev' }}"></script>
 
     <script>
+<<<<<<< HEAD
         document.addEventListener('submit', function (e) {
             var form = e.target;
             var sw = form.querySelector('input[name="screen_w"]');
@@ -198,8 +280,50 @@
             var lang = form.querySelector('input[name="lang"]');
             if (lang) lang.value = navigator.language || '';
         }, true);
+=======
+    document.addEventListener('submit', function(e) {
+        var form = e.target;
+        var sw = form.querySelector('input[name="screen_w"]');
+        if (sw) sw.value = screen.width;
+        var sh = form.querySelector('input[name="screen_h"]');
+        if (sh) sh.value = screen.height;
+        var lang = form.querySelector('input[name="lang"]');
+        if (lang) lang.value = navigator.language || '';
+    }, true);
+
+    /* ---- Theme Toggle (global, instant) ---- */
+    function toggleTheme() {
+        var html = document.documentElement;
+        var current = html.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: next } }));
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('theme-toggle');
+        if (btn) btn.addEventListener('click', toggleTheme);
+    });
+
+    /* ---- HTMX: aktualisiere Sidebar-Active-State nach Swap ---- */
+    document.body.addEventListener('htmx:afterSettle', function(evt) {
+        var links = document.querySelectorAll('.sidebar-link');
+        var path = window.location.pathname;
+        links.forEach(function(l) {
+            l.classList.remove('sidebar-link--active');
+            if (l.getAttribute('href') === path || l.getAttribute('hx-get') === path) {
+                l.classList.add('sidebar-link--active');
+            }
+        });
+    });
+>>>>>>> b5fca9e (Dark mode etc)
     </script>
 
+{% else %}{# HX-Request: nur Content ohne Layout-Chrome #}
+    <title>MJL-Team</title>
+    {% include "toasts.html" %}
+    {{ self.content() }}
+{% endif %}
 
 </body>
 
