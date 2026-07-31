@@ -90,6 +90,17 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Text-Auswahl (markiert) — blau-schwarz für sauberes Design */
+::selection {
+    background: #0e2244;
+    color: #ffffff;
+}
+
+::-moz-selection {
+    background: #0e2244;
+    color: #ffffff;
+}
+
 /* --- Typography --- */
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-sans);
@@ -634,6 +645,27 @@ input:-webkit-autofill:focus {
 .footer-brand {
     font-weight: 600;
     color: var(--ink);
+}
+
+.footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.footer-link {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s var(--ease-out);
+}
+
+.footer-link:hover {
+    color: var(--ink);
+    opacity: 1;
 }
 
 /* --- Main Content --- */
@@ -1261,6 +1293,11 @@ input:-webkit-autofill:focus {
         padding: 24px;
     }
 
+    /* Mobile: Anmelden/Registrieren-Buttons im Header ausblenden */
+    .header-nav .btn {
+        display: none;
+    }
+
     .header-inner {
         flex-direction: column;
         gap: 12px;
@@ -1269,6 +1306,11 @@ input:-webkit-autofill:focus {
     .footer-inner {
         flex-direction: column;
         text-align: center;
+    }
+
+    .footer-legal {
+        justify-content: center;
+        width: 100%;
     }
 }
 
@@ -1328,7 +1370,7 @@ input:-webkit-autofill:focus {
 [x-cloak] { display: none !important; }
 
 /* ============================================================
-   Password Strength Meter
+   Password Strength Meter — farbige Balken mit smooth Animation
    ============================================================ */
 .pw-meter {
     display: flex;
@@ -1341,38 +1383,38 @@ input:-webkit-autofill:focus {
     height: 4px;
     border-radius: 2px;
     background: #e5e5e5;
+    transform: scaleX(0.35);
+    transform-origin: left center;
     transition:
-        background-color 0.4s var(--ease-out),
-        transform 0.3s var(--ease-out);
+        background-color 0.45s var(--ease-out),
+        transform 0.45s var(--ease-out),
+        box-shadow 0.45s var(--ease-out);
 }
 
+.pw-meter__bar:nth-child(2) { transition-delay: 45ms; }
+.pw-meter__bar:nth-child(3) { transition-delay: 90ms; }
+.pw-meter__bar:nth-child(4) { transition-delay: 135ms; }
+
+/* Beim Löschen (Backspace) sofort zurückschrumpfen statt mit Verzögerung */
+.pw-meter__bar:not(.pw-meter__bar--active) {
+    transition-delay: 0ms;
+}
+
+/* Alle aktiven Balken füllen sich grün */
 .pw-meter__bar--active {
-    background: var(--teal);
-    transform: scaleY(1.5);
+    background: #30a46c;
+    transform: scaleX(1);
 }
 
 /* ============================================================
-   Password Strength — Label "Stark"
+   Password Strength — Hinweis
    ============================================================ */
 
-.pw-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.pw-hint {
     font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--teal-deep);
-    opacity: 0;
-    transition: opacity 0.4s var(--ease-out);
-}
-
-.pw-label--visible {
-    opacity: 1;
-}
-
-.pw-label__icon {
-    width: 16px;
-    height: 16px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-top: 4px;
 }
 
 /* ============================================================

@@ -12,8 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..72,400;8..72,600&display=swap" rel="stylesheet">
 
-    <!-- MJL Design System -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}">
+    <!-- MJL Design System (Cache-Buster via Commit-Version) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}?v={{ version or 'dev' }}">
 
     <!-- Favicon & App Icons -->
     <link rel="icon" href="{{ url_for('static', filename='logo/mjl-logo-square-transparent.ico') }}" type="image/x-icon">
@@ -116,7 +116,10 @@
     <footer class="site-footer">
         <div class="footer-inner">
             <div class="footer-brand">MJL-Team</div>
-            <div>&copy; {{ now().year }} MJL-Team</div>
+            <div class="footer-legal">
+                <a href="{{ url_for('legal.terms') }}" class="footer-link">Nutzungsbedingungen</a>
+                <span>&copy; {{ now().year }} MJL-Team</span>
+            </div>
         </div>
     </footer>
 
@@ -125,6 +128,6 @@
     {% block scripts %}{% endblock %}
 
     <!-- Cursor Dots Shader (test) -->
-    <script src="{{ url_for('static', filename='js/cursor-dots.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cursor-dots.js') }}?v={{ version or 'dev' }}"></script>
 </body>
 </html>

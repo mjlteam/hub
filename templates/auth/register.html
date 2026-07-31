@@ -22,10 +22,10 @@
             </div>
 
             <div class="card card-padded">
-                <form method="post" class="space-y-5" @submit="submitting = true">
+                <form method="post" class="space-y-5" @submit="if (!isStrong) $event.preventDefault(); else submitting = true">
                     <div class="form-group">
                         <label for="username" class="form-label">Benutzername</label>
-                        <input id="username" name="username" type="text" class="input" placeholder="max.mustermann" autocomplete="username" required autofocus>
+                        <input id="username" name="username" type="text" class="input" placeholder="max.mustermann" autocomplete="username" required autofocus value="{{ request.form.get('username', '') }}" minlength="3" maxlength="32">
                     </div>
 
                     <div class="form-group">
@@ -33,7 +33,7 @@
                             E-Mail
                             <span class="form-label-optional">(optional)</span>
                         </label>
-                        <input id="email" name="email" type="email" class="input" placeholder="max@beispiel.de" autocomplete="email">
+                        <input id="email" name="email" type="email" class="input" placeholder="max@beispiel.de" autocomplete="email" value="{{ request.form.get('email', '') }}">
                     </div>
 
                     <div class="form-group">
@@ -54,22 +54,17 @@
                             <template x-for="i in 4" :key="i">
                                 <div
                                     class="pw-meter__bar"
-                                    :class="{
-                                        'pw-meter__bar--active': i <= strength
-                                    }"
+                                    :class="barClass(i)"
                                 ></div>
                             </template>
                         </div>
 
-                        <div class="pw-label" :class="{ 'pw-label--visible': isStrong }">
-                            <svg class="pw-label__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            Stark
+                        <div class="pw-hint" x-show="password.length > 0 && !isStrong" x-transition.opacity.duration.200ms x-cloak>
+                            Mindestens 8 Zeichen, ein Buchstabe und eine Zahl — danach kannst du fortfahren.
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting">
+                    <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting || !isStrong">
                         <span>Konto erstellen</span>
                         <span class="spinner spinner--xl btn-loading-spinner"></span>
                     </button>
@@ -94,18 +89,24 @@ function registerForm() {
         password: '',
         strength: 0,
         isStrong: false,
+        barClass(i) {
+            return {
+                'pw-meter__bar--active': i <= this.strength
+            };
+        },
         checkStrength() {
             const p = this.password || '';
             const len = p.length;
-            // 4 bars basierend auf Länge, bei 8+ = voll
+            const hasLetter = /[A-Za-z]/.test(p);
+            const hasNumber = /[0-9]/.test(p);
+            // 4 Stufen: rot → gelb → grün → grün (stark)
             let s = 0;
-            if (len >= 2) s = 1;
-            if (len >= 4) s = 2;
-            if (len >= 6) s = 3;
-            if (len >= 8) s = 4;
+            if (len >= 2) s = 1;       // rot
+            if (len >= 5) s = 2;       // gelb
+            if (len >= 8) s = 3;       // grün
+            if (len >= 8 && hasLetter && hasNumber) s = 4; // stark
             this.strength = s;
-            // Stark = 8+ Zeichen + mindestens 1 Buchstabe
-            this.isStrong = len >= 8 && /[A-Za-z]/.test(p);
+            this.isStrong = s >= 4;
         }
     };
 }

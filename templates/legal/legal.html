@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Nutzungsbedingungen — MJL-Team{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="legal-page">
+
+        <!-- ============================================================
+             HEADER (Titel + Meta) — kannst du frei lassen
+             ============================================================ -->
+        <header class="legal-header">
+            <p class="label text-secondary" style="margin-bottom: 12px;">Rechtliches</p>
+            <h1 class="display" style="font-size: clamp(2rem, 4vw, 2.75rem); margin-bottom: 8px;">Nutzungsbedingungen</h1>
+            <p class="text-secondary body-small">
+                Zuletzt aktualisiert: <span class="pill" style="margin-left: 4px;">1. August 2026</span>
+            </p>
+        </header>
+
+        <!-- ============================================================
+             ✏️  HIER BEGINNT DER AGB-TEXT
+
+
+        <!-- ✏️  HIER ENDET DER AGB-TEXT
+             ============================================================ -->
+
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+    /* ============================================================
+       Legal Page Styles (Design System-konform)
+       ============================================================ */
+    .legal-page {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    .legal-header {
+        margin-bottom: 40px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .legal-section {
+        margin-bottom: 40px;
+    }
+
+    .legal-section h2 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 12px;
+        color: var(--ink);
+    }
+
+    .legal-section p {
+        color: var(--text-body);
+        margin-bottom: 12px;
+        line-height: 1.65;
+    }
+
+    .legal-section p:last-child {
+        margin-bottom: 0;
+    }
+
+    .legal-section ul {
+        margin: 12px 0 0;
+        padding-left: 0;
+        list-style: none;
+    }
+
+    .legal-section ul li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        color: var(--text-body);
+        line-height: 1.55;
+    }
+
+    .legal-section ul li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 10px;
+        width: 6px;
+        height: 6px;
+        border-radius: 9999px;
+        background: var(--ink);
+    }
+</style>
+{% endblock %}

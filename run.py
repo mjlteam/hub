@@ -20,6 +20,15 @@ def create_app():
     app.config.setdefault('SECRET_KEY', os.environ.get('SECRET_KEY', 'dev-secret'))
     app.config.setdefault('SQLALCHEMY_DATABASE_URI', os.environ.get('DATABASE_URL', 'sqlite:///main.db'))
     app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+    # Immer frische Templates laden (kein altes „Stark"/Haken mehr nach Edits)
+    app.config.setdefault('TEMPLATES_AUTO_RELOAD', True)
+
+    # Session / cookie hardening
+    app.config.setdefault('SESSION_COOKIE_HTTPONLY', True)
+    app.config.setdefault('SESSION_COOKIE_SAMESITE', 'Lax')
+    app.config.setdefault('REMEMBER_COOKIE_HTTPONLY', True)
+    app.config.setdefault('REMEMBER_COOKIE_SAMESITE', 'Lax')
+    app.config.setdefault('SESSION_COOKIE_SECURE', os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true')
 
     import secrets
 

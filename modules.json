@@ -11,5 +11,11 @@
       "package": "modules.auth",
       "enabled": true
     }
+    ,
+    {
+      "name": "legal",
+      "package": "modules.legal",
+      "enabled": true
+    }
   ]
 }
