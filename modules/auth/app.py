@@ -8,7 +8,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from extensions import db
-from models import User
+from models import User, LoginSession
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -70,6 +70,94 @@ def _authenticate(username: str, password: str):
     return None
 
 
+def _parse_user_agent(ua: str):
+    """Simple user-agent parser – extracts browser, OS, device type."""
+    ua_lower = ua.lower()
+
+    # Browser
+    browser = 'Unknown'
+    browser_version = ''
+    if 'edg/' in ua_lower:
+        browser = 'Edge'
+        m = re.search(r'edg/([\d.]+)', ua_lower)
+        if m: browser_version = m.group(1)
+    elif 'chrome/' in ua_lower and 'chromium' not in ua_lower:
+        browser = 'Chrome'
+        m = re.search(r'chrome/([\d.]+)', ua_lower)
+        if m: browser_version = m.group(1)
+    elif 'firefox/' in ua_lower:
+        browser = 'Firefox'
+        m = re.search(r'firefox/([\d.]+)', ua_lower)
+        if m: browser_version = m.group(1)
+    elif 'safari/' in ua_lower:
+        browser = 'Safari'
+        m = re.search(r'version/([\d.]+)', ua_lower)
+        if m: browser_version = m.group(1)
+
+    # OS
+    os_name = 'Unknown'
+    os_version = ''
+    if 'windows nt 10' in ua_lower:
+        os_name = 'Windows'; os_version = '10/11'
+    elif 'windows nt 6.3' in ua_lower:
+        os_name = 'Windows'; os_version = '8.1'
+    elif 'windows nt 6.1' in ua_lower:
+        os_name = 'Windows'; os_version = '7'
+    elif 'mac os x' in ua_lower:
+        os_name = 'macOS'
+        m = re.search(r'mac os x ([\d_]+)', ua_lower)
+        if m: os_version = m.group(1).replace('_', '.')
+    elif 'linux' in ua_lower and 'android' not in ua_lower:
+        os_name = 'Linux'
+    elif 'android' in ua_lower:
+        os_name = 'Android'
+        m = re.search(r'android ([\d.]+)', ua_lower)
+        if m: os_version = m.group(1)
+    elif 'iphone' in ua_lower or 'ipad' in ua_lower:
+        os_name = 'iOS'
+        m = re.search(r'os ([\d_]+)', ua_lower)
+        if m: os_version = m.group(1).replace('_', '.')
+
+    # Device type
+    device_type = 'Desktop'
+    if 'mobile' in ua_lower or 'android' in ua_lower:
+        device_type = 'Mobile'
+    elif 'ipad' in ua_lower or 'tablet' in ua_lower:
+        device_type = 'Tablet'
+
+    return browser, browser_version, os_name, os_version, device_type
+
+
+def _track_login(user: User):
+    """Create a LoginSession record with browser/device data from the client form."""
+    ua = request.headers.get('User-Agent', '')
+    browser, browser_version, os_name, os_version, device_type = _parse_user_agent(ua)
+
+    session = LoginSession(
+        user_id=user.id,
+        ip_address=request.remote_addr or 'unknown',
+        user_agent=ua[:500] if ua else None,
+        browser=browser,
+        browser_version=browser_version,
+        os=os_name,
+        os_version=os_version,
+        device_type=device_type,
+        screen_width=request.form.get('screen_w', type=int),
+        screen_height=request.form.get('screen_h', type=int),
+        language=(request.form.get('lang') or '')[:10] or None,
+    )
+    db.session.add(session)
+    db.session.commit()
+
+    # Keep only the 2 latest sessions per user
+    old_sessions = LoginSession.query.filter_by(user_id=user.id)\
+        .order_by(LoginSession.logged_in_at.desc())\
+        .offset(2).all()
+    for old in old_sessions:
+        db.session.delete(old)
+    db.session.commit()
+
+
 def _handle_login(template: str):
     """Shared login POST handling used by both login routes."""
     if request.method != 'POST':
@@ -80,9 +168,13 @@ def _handle_login(template: str):
     user = _authenticate(username, password)
 
     if user:
+        if user.banned:
+            flash('Dieser Account wurde gesperrt.', 'error')
+            return None
         # Successful login resets the attempt counter for this client
         with _attempts_lock:
             _attempts.pop(_client_key('login'), None)
+        _track_login(user)
         login_user(user)
         next_url = request.args.get('next') or request.form.get('next')
         if _is_safe_next(next_url):

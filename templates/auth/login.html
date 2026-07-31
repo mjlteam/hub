@@ -22,6 +22,9 @@
             <div class="card card-padded">
                 <form method="post" class="space-y-5" @submit="submitting = true">
                     <input name="next" type="hidden" value="{{ next or '' }}">
+                    <input name="screen_w" type="hidden" value="">
+                    <input name="screen_h" type="hidden" value="">
+                    <input name="lang" type="hidden" value="">
 
                     <div class="form-group">
                         <label for="username" class="form-label">Benutzername oder E-Mail</label>

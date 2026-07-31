@@ -23,23 +23,43 @@ from extensions import db
 from sqlalchemy import inspect, text
 
 
-def ensure_user_role_column():
+def ensure_user_columns():
     inspector = inspect(db.engine)
     if 'users' not in inspector.get_table_names():
         return
 
     columns = {column['name'] for column in inspector.get_columns('users')}
-    if 'role' in columns:
-        return
+    if 'role' not in columns:
+        print('Adding missing users.role column...')
+        db.session.execute(text('ALTER TABLE users ADD COLUMN role INTEGER NOT NULL DEFAULT 1'))
+        db.session.commit()
 
-    print('Adding missing users.role column...')
-    db.session.execute(text('ALTER TABLE users ADD COLUMN role INTEGER NOT NULL DEFAULT 1'))
+    if 'banned' not in columns:
+        print('Adding missing users.banned column...')
+        db.session.execute(text('ALTER TABLE users ADD COLUMN banned BOOLEAN NOT NULL DEFAULT 0'))
+        db.session.commit()
+
+
+
+def seed_admin():
+    """Create or update the default admin/test account."""
+    from models import User
+    admin = User.query.filter_by(username='admin').first()
+    if admin:
+        admin.role = 10
+        print('Updated existing admin user → role=10 (Admin)')
+    else:
+        admin = User(username='admin', email='admin@mjlteam.de', role=10)
+        admin.set_password('admin123')
+        db.session.add(admin)
+        print('Created admin user: admin / admin123 (role=10)')
     db.session.commit()
 
 
 def main():
     parser = argparse.ArgumentParser(description='Initialize or reset the database')
     parser.add_argument('--drop', action='store_true', help='Drop all tables before creating')
+    parser.add_argument('--seed', action='store_true', help='Create/update admin test account (admin / admin123, role=10)')
     args = parser.parse_args()
 
     app = create_app()
@@ -54,7 +74,11 @@ def main():
 
         print('Creating tables...')
         db.create_all()
-        ensure_user_role_column()
+        ensure_user_columns()
+
+        if args.seed:
+            seed_admin()
+
         print('Done.')
 
 
