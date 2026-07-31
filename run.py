@@ -1,6 +1,8 @@
 import json
 import importlib
 import os
+import subprocess
+import sys
 from pathlib import Path
 from flask import Flask, Blueprint, jsonify, render_template
 from dotenv import load_dotenv
@@ -134,6 +136,11 @@ def create_app():
 
 app = create_app()
 
+
+def run_init_db(project_root: Path) -> None:
+    init_db_script = project_root / 'scripts' / 'init_db.py'
+    subprocess.run([sys.executable, str(init_db_script)], cwd=project_root, check=True)
+
 if __name__ == '__main__':
     import argparse
 
@@ -148,4 +155,5 @@ if __name__ == '__main__':
         host = '0.0.0.0'
         debug_mode = False
 
+    run_init_db(Path(__file__).resolve().parent)
     app.run(host=host, port=5000, debug=debug_mode)
