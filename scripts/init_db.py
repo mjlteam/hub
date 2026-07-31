@@ -20,6 +20,21 @@ sys.path.insert(0, str(project_root))
 
 from run import create_app
 from extensions import db
+from sqlalchemy import inspect, text
+
+
+def ensure_user_role_column():
+    inspector = inspect(db.engine)
+    if 'users' not in inspector.get_table_names():
+        return
+
+    columns = {column['name'] for column in inspector.get_columns('users')}
+    if 'role' in columns:
+        return
+
+    print('Adding missing users.role column...')
+    db.session.execute(text('ALTER TABLE users ADD COLUMN role INTEGER NOT NULL DEFAULT 1'))
+    db.session.commit()
 
 
 def main():
@@ -39,6 +54,7 @@ def main():
 
         print('Creating tables...')
         db.create_all()
+        ensure_user_role_column()
         print('Done.')
 
 

@@ -2,6 +2,7 @@ from extensions import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy import text
 
 
 class User(UserMixin, db.Model):
@@ -10,6 +11,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(200), unique=True, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.Integer, nullable=False, default=1, server_default=text('1'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password: str):

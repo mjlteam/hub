@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management — MJL-Team{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-6 py-12">
+    <div class="mb-8">
+        <h1 class="text-4xl md:text-5xl font-semibold text-[#0d0d0d]">User Management</h1>
+    </div>
+
+    <div class="mb-6">
+        <a href="{{ url_for('admin.admin_nav') }}" class="inline-flex items-center rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-medium text-[#0d0d0d] shadow-sm hover:shadow-md transition-shadow">Zurück</a>
+    </div>
+
+    <div class="overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-[#e5e7eb]">
+                <thead class="bg-[#fafafa]">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">ID</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">Benutzer</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">E-Mail</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">Rolle</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#f1f1f1]">
+                    {% for user in users %}
+                    <tr class="align-top">
+                        <td class="px-6 py-4 text-sm text-[#4b5563]">{{ user.id }}</td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold text-[#0d0d0d]">{{ user.username }}</div>
+                            {% if current_user.id == user.id %}
+                                <div class="mt-1 text-xs uppercase tracking-[0.2em] text-[#10a37f]">Aktueller Account</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-[#4b5563]">{{ user.email or '—' }}</td>
+                        <td class="px-6 py-4">
+                            <select form="user-role-form-{{ user.id }}" name="role" class="input min-w-[180px] !h-11">
+                                {% for value, label in role_options %}
+                                    <option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="px-6 py-4">
+                            <form id="user-role-form-{{ user.id }}" method="post" class="flex items-center gap-3">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <button type="submit" class="btn btn-primary">Speichern</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

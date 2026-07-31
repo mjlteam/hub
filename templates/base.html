@@ -38,6 +38,9 @@
             <nav class="header-nav">
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('hub.hub') }}" class="nav-link">Hub</a>
+                    {% if current_user.role == 10 %}
+                        <a href="{{ url_for('admin.admin_nav') }}" class="nav-link">Admin</a>
+                    {% endif %}
                     <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--error);">Abmelden</a>
                 {% else %}
                     <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm">Anmelden</a>
@@ -117,7 +120,7 @@
         <div class="footer-inner">
             <div class="footer-brand">MJL-Team</div>
             <div class="footer-legal">
-                <a href="{{ url_for('legal.terms') }}" class="footer-link">Nutzungsbedingungen</a>
+                <a href="https://health.mjlteam.de/status/mjl-hub" class="footer-link" target="_blank">Status</a>
                 <span>&copy; {{ now().year }} MJL-Team</span>
             </div>
         </div>

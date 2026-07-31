@@ -4,17 +4,15 @@
       "name": "hub",
       "package": "modules.hub",
       "enabled": true
-    }
-    ,
+    },
     {
       "name": "auth",
       "package": "modules.auth",
       "enabled": true
-    }
-    ,
+    },
     {
-      "name": "legal",
-      "package": "modules.legal",
+      "name": "admin",
+      "package": "modules.admin",
       "enabled": true
     }
   ]

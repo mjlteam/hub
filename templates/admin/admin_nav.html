@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Navigator — MJL-Team{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-6 py-12">
+    <div class="mb-8">
+        <h1 class="text-4xl md:text-5xl font-semibold text-[#0d0d0d]">Admin Navigator</h1>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+        <a href="{{ url_for('admin.admin_users') }}" class="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-xl font-semibold text-[#0d0d0d]">User Management</div>
+            <div class="mt-2 text-sm text-[#4b5563]">Benutzer anzeigen und Rollen ändern.</div>
+        </a>
+    </div>
+</section>
+{% endblock %}
