@@ -42,9 +42,6 @@
                         <a href="{{ url_for('admin.admin_nav') }}" class="nav-link">Admin</a>
                     {% endif %}
                     <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--error);">Abmelden</a>
-                {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm">Anmelden</a>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Registrieren</a>
                 {% endif %}
             </nav>
         </div>
