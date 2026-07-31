@@ -61,13 +61,6 @@ def admin_dashboard():
         device_stats=device_stats,
     )
 
-
-@bp.route('/nav')
-@admin_required
-def admin_nav():
-    return render_template('admin/admin_nav.html')
-
-
 @bp.route('/users', methods=['GET', 'POST'])
 @admin_required
 def admin_users():
