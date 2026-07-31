@@ -89,12 +89,3 @@ Fehlerseiten
 ------------
 Eigene Fehlerseiten sind unter `templates/errors/` (400, 403, 404, 500).
 
-Weiteres / Entwicklung
-----------------------
-- CSRF‑Schutz, E-Mail‑Verifikation und Passwort‑Reset sind nicht standardmäßig aktiviert — können bei Bedarf ergänzt werden.
-- Unit- oder Integrationstests sollten in einem späteren Schritt hinzugefügt werden.
-
-Hilfe / Kontakt
----------------
-Wenn du Änderungen am Modul-Loader, an der Auth-Logik oder am Design wünschst, sag mir welche Funktion du erweitert haben möchtest — ich mache es direkt im Projekt.
-
