@@ -1,7 +1,7 @@
 /**
  * Cursor Dots — WebGL Background Shader
- * Pure white (#FFFFFF) by default. Small black grid-dots appear around the cursor.
- * Subtle, precise, premium.
+ * Pure white (#FFFFFF) in light mode, dark (#191918) in dark mode.
+ * Small dots appear around the cursor. Subtle, precise, premium.
  */
 (function () {
     const canvas = document.createElement('canvas');
@@ -37,6 +37,7 @@
             u_time: { value: 0 },
             u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
             u_cursor: { value: new THREE.Vector2(-9999, -9999) },
+            u_dark: { value: document.documentElement.getAttribute('data-theme') === 'dark' ? 1.0 : 0.0 },
         };
 
         const material = new THREE.ShaderMaterial({
@@ -55,6 +56,7 @@
                 uniform float u_time;
                 uniform vec2 u_resolution;
                 uniform vec2 u_cursor;
+                uniform float u_dark;
 
                 void main() {
                     // Convert UV to pixel coords
@@ -83,10 +85,15 @@
                     // Combine: dot visibility × cursor proximity influence
                     float alpha = dot * influence;
 
-                    // White background, black dots
-                    vec3 white = vec3(1.0, 1.0, 1.0);
-                    vec3 black = vec3(0.0, 0.0, 0.0);
-                    vec3 color = mix(white, black, alpha * 0.55);
+                    // Light mode: white bg, black dots. Dark mode: dark bg, light dots.
+                    vec3 bgLight  = vec3(1.0, 1.0, 1.0);
+                    vec3 dotLight = vec3(0.0, 0.0, 0.0);
+                    vec3 bgDark   = vec3(0.098, 0.098, 0.094); // #191918
+                    vec3 dotDark  = vec3(0.945, 0.945, 0.937); // #f1f1ef
+
+                    vec3 bg  = mix(bgLight,  bgDark,  u_dark);
+                    vec3 dotClr = mix(dotLight, dotDark, u_dark);
+                    vec3 color = mix(bg, dotClr, alpha * 0.55);
 
                     gl_FragColor = vec4(color, 1.0);
                 }
@@ -121,6 +128,11 @@
         window.addEventListener('resize', function () {
             renderer.setSize(window.innerWidth, window.innerHeight);
             uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+        });
+
+        // Listen for theme changes
+        window.addEventListener('themechange', function (e) {
+            uniforms.u_dark.value = e.detail.theme === 'dark' ? 1.0 : 0.0;
         });
     }
 

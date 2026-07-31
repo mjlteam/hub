@@ -4,55 +4,140 @@
 
 {% block content %}
 <section class="max-w-7xl mx-auto px-6 py-12">
-    <div class="mb-8">
-        <h1 class="text-4xl md:text-5xl font-semibold text-[#0d0d0d]">User Management</h1>
-    </div>
-
-    <div class="mb-6">
-        <a href="{{ url_for('admin.admin_nav') }}" class="inline-flex items-center rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-medium text-[#0d0d0d] shadow-sm hover:shadow-md transition-shadow">Zurück</a>
-    </div>
-
-    <div class="overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-[#e5e7eb]">
-                <thead class="bg-[#fafafa]">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">ID</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">Benutzer</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">E-Mail</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">Rolle</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.25em] text-[#6b7280]">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#f1f1f1]">
-                    {% for user in users %}
-                    <tr class="align-top">
-                        <td class="px-6 py-4 text-sm text-[#4b5563]">{{ user.id }}</td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-semibold text-[#0d0d0d]">{{ user.username }}</div>
-                            {% if current_user.id == user.id %}
-                                <div class="mt-1 text-xs uppercase tracking-[0.2em] text-[#10a37f]">Aktueller Account</div>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-[#4b5563]">{{ user.email or '—' }}</td>
-                        <td class="px-6 py-4">
-                            <select form="user-role-form-{{ user.id }}" name="role" class="input min-w-[180px] !h-11">
-                                {% for value, label in role_options %}
-                                    <option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td class="px-6 py-4">
-                            <form id="user-role-form-{{ user.id }}" method="post" class="flex items-center gap-3">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                <button type="submit" class="btn btn-primary">Speichern</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- Header Row -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;">
+        <div>
+            <h1 style="font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; color: var(--ink); margin: 0;">User Management</h1>
+            <p class="text-secondary body-small" style="margin-top: 2px;">{{ users|length }} Benutzer{% if search %} gefunden{% endif %}</p>
         </div>
+
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+        <form method="get" style="display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-tertiary); flex-shrink: 0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+                name="q"
+                type="text"
+                class="input"
+                placeholder="Nach Benutzername oder E-Mail suchen…"
+                value="{{ search }}"
+                style="border: none; background: transparent; padding: 4px 0; box-shadow: none;"
+                autofocus
+            >
+            {% if search %}
+            <a href="{{ url_for('admin.admin_users') }}" class="btn btn-ghost btn-sm" style="flex-shrink: 0;">✕ Löschen</a>
+            {% endif %}
+            <button type="submit" class="btn btn-primary btn-sm" style="flex-shrink: 0;">Suchen</button>
+        </form>
+    </div>
+
+    <!-- Users List -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for user in users %}
+        {% set sessions = sessions_by_user.get(user.id, []) %}
+        <div class="card" style="padding: 0; overflow: hidden;{% if user.banned %} border-color: var(--error-border); opacity: 0.7;{% endif %}"
+            x-data="{ detailOpen: false, pwOpen: false }"
+        >
+            <!-- Row Header -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; transition: background-color 0.15s var(--ease-out);"
+                @click="detailOpen = !detailOpen"
+                @mouseenter="$el.style.background='var(--surface-mist)'"
+                @mouseleave="$el.style.background=''"
+            >
+                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-tertiary);">#{{ user.id }}</span>
+                    <div>
+                        <span style="font-weight: 600; color: var(--ink);">{{ user.username }}</span>
+                        {% if current_user.id == user.id %}
+                            <span class="pill pill-teal" style="font-size: 0.6875rem; padding: 2px 8px; margin-left: 6px;">Du</span>
+                        {% endif %}
+                        {% if user.banned %}
+                            <span class="pill pill-banned" style="font-size: 0.6875rem; padding: 2px 8px; margin-left: 6px;">Gesperrt</span>
+                        {% endif %}
+                    </div>
+                    <span class="pill{% if user.role == 10 %} pill-error{% elif user.role >= 3 %} pill-teal{% endif %}" style="font-size: 0.6875rem;">
+                        {% if user.role == 10 %}Admin{% elif user.role == 3 %}Moderator{% elif user.role == 2 %}VIP{% else %}Normal{% endif %}
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ user.email or '—' }}</span>
+                    <span class="pill" style="font-size: 0.6875rem;">{{ sessions|length }} Gerät{{ 'e' if sessions|length != 1 else '' }}</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-tertiary); transition: transform 0.2s var(--ease-out); flex-shrink: 0;"
+                    :style="detailOpen ? 'transform: rotate(180deg)' : ''"
+                ><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+
+            <!-- Expandable Detail Panel -->
+            <div x-show="detailOpen" x-cloak style="border-top: 1px solid var(--border-soft); padding: 20px;">
+                <!-- Actions: Role + Password + Ban -->
+                <div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-soft);">
+                    <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        <input type="hidden" name="action" value="role">
+                        <select name="role" class="input" style="min-width: 130px; padding: 6px 10px; font-size: 0.8125rem; height: 34px;">
+                            {% for value, label in role_options %}
+                                <option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Rolle speichern</button>
+                    </form>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <button @click.stop="pwOpen = !pwOpen" class="btn btn-ghost btn-sm" style="font-size: 0.75rem;">
+                            <span x-show="!pwOpen">Passwort ändern</span>
+                            <span x-show="pwOpen" x-cloak>Schließen</span>
+                        </button>
+                        <form x-show="pwOpen" x-cloak method="post" style="display: flex; align-items: center; gap: 8px;" @click.stop="">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <input type="hidden" name="action" value="password">
+                            <input name="new_password" type="password" class="input" placeholder="Neues Passwort" style="padding: 6px 10px; font-size: 0.8125rem; height: 34px; min-width: 160px;" minlength="8" required>
+                            <button type="submit" class="btn btn-danger btn-sm">Setzen</button>
+                        </form>
+                    </div>
+                    <!-- Ban / Unban -->
+                    {% if current_user.id != user.id %}
+                    <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        {% if user.banned %}
+                            <input type="hidden" name="action" value="unban">
+                            <button type="submit" class="btn btn-accent btn-sm">Entsperren</button>
+                        {% else %}
+                            <input type="hidden" name="action" value="ban">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ user.username }} wirklich sperren?')">Sperren</button>
+                        {% endif %}
+                    </form>
+                    {% endif %}
+                </div>
+
+                <!-- Unique Devices -->
+                <p class="label" style="margin-bottom: 12px;">Verschiedene Geräte ({{ sessions|length }})</p>
+                {% if sessions %}
+                <div style="display: grid; gap: 8px;">
+                    {% for s in sessions %}
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; padding: 12px 16px; border-radius: var(--radius); background: var(--surface-mist); border: 1px solid var(--border-soft);">
+                        <div><span class="caption" style="color: var(--text-tertiary);">Session-ID</span><br><span class="body-small" style="color: var(--ink); font-weight: 500; font-family: var(--font-mono);">#{{ s.id }}</span></div>
+                        <div><span class="caption" style="color: var(--text-tertiary);">Browser</span><br><span class="body-small" style="color: var(--ink); font-weight: 500;">{{ s.browser or '?' }} {% if s.browser_version %}v{{ s.browser_version }}{% endif %}</span></div>
+                        <div><span class="caption" style="color: var(--text-tertiary);">Betriebssystem</span><br><span class="body-small" style="color: var(--ink); font-weight: 500;">{{ s.os or '?' }}{% if s.os_version %} {{ s.os_version }}{% endif %}</span></div>
+                        <div><span class="caption" style="color: var(--text-tertiary);">Gerätetyp</span><br><span class="body-small" style="color: var(--ink); font-weight: 500;">{{ s.device_type or '?' }}</span></div>
+                        <div><span class="caption" style="color: var(--text-tertiary);">Bildschirm</span><br><span class="body-small" style="color: var(--ink); font-weight: 500; font-family: var(--font-mono);">{% if s.screen_width %}{{ s.screen_width }} × {{ s.screen_height }}{% else %}?{% endif %}</span></div>
+                        <div><span class="caption" style="color: var(--text-tertiary);">Sprache</span><br><span class="body-small" style="color: var(--ink); font-weight: 500;">{{ s.language or '?' }}</span></div>
+                        <div><span class="caption" style="color: var(--text-tertiary);">IP-Adresse</span><br><span class="body-small" style="color: var(--ink); font-weight: 500; font-family: var(--font-mono); font-size: 0.8125rem;">{{ s.ip_address or '?' }}</span></div>
+                        <div><span class="caption" style="color: var(--text-tertiary);">Letzter Login</span><br><span class="body-small" style="color: var(--ink); font-weight: 500;">{{ s.logged_in_at.strftime('%d.%m.%Y %H:%M:%S') if s.logged_in_at else '—' }}</span></div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-tertiary body-small">Noch keine Login-Daten erfasst.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not users %}
+        <div class="card" style="padding: 40px 20px; text-align: center;">
+            <p style="color: var(--text-tertiary);">{% if search %}Keine Benutzer gefunden.{% else %}Noch keine Benutzer.{% endif %}</p>
+        </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

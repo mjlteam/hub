@@ -4,14 +4,18 @@
 
 {% block content %}
 <section class="max-w-6xl mx-auto px-6 py-12">
-    <div class="mb-8">
-        <h1 class="text-4xl md:text-5xl font-semibold text-[#0d0d0d]">Admin Navigator</h1>
+    <div style="margin-bottom: 32px;">
+        <h1 style="font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; color: var(--ink); margin: 0;">Admin Navigator</h1>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-3">
-        <a href="{{ url_for('admin.admin_users') }}" class="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div class="text-xl font-semibold text-[#0d0d0d]">User Management</div>
-            <div class="mt-2 text-sm text-[#4b5563]">Benutzer anzeigen und Rollen ändern.</div>
+    <div class="grid gap-4 md:grid-cols-2">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="card" style="padding: 28px; text-decoration: none;">
+            <div style="font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 6px;">📊 Dashboard</div>
+            <div class="text-sm" style="color: var(--text-secondary);">Statistiken, Logins & System-Übersicht</div>
+        </a>
+        <a href="{{ url_for('admin.admin_users') }}" class="card" style="padding: 28px; text-decoration: none;">
+            <div style="font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 6px;">👥 User Management</div>
+            <div class="text-sm" style="color: var(--text-secondary);">Benutzer suchen, anzeigen und Rollen ändern</div>
         </a>
     </div>
 </section>

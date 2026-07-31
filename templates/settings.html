@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Einstellungen — MJL-Team{% endblock %}
+
+{% block content %}
+<section style="max-width: 480px; padding: 32px 24px;">
+    <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 24px;">Einstellungen</h2>
+
+    <!-- Passwort ändern -->
+    <div class="card" style="padding: 20px;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px;">Passwort ändern</h3>
+        <form method="post" style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="hidden" name="action" value="change_password">
+            <div class="form-group">
+                <label class="form-label">Aktuelles Passwort</label>
+                <input type="password" name="current_password" class="input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Neues Passwort</label>
+                <input type="password" name="new_password" class="input" minlength="8" required>
+                <span class="form-hint">Mindestens 8 Zeichen</span>
+            </div>
+            <button type="submit" class="btn btn-primary" style="align-self: flex-start;">Passwort ändern</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

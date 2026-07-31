@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block body_class %}split-page text-[#0d0d0d] font-sans antialiased{% endblock %}
+{% block body_class %}split-page font-sans antialiased{% endblock %}
 
 {% block layout %}
 <div class="split-page" x-data="{ showPw: false, submitting: false }">
@@ -35,6 +35,9 @@
                 <div>
                     <form method="post" @submit="submitting = true">
                         <input name="next" type="hidden" value="{{ next or '' }}">
+                        <input name="screen_w" type="hidden" value="">
+                        <input name="screen_h" type="hidden" value="">
+                        <input name="lang" type="hidden" value="">
 
                         <div class="form-group">
                             <label for="username" class="form-label">Benutzername oder E-Mail</label>
