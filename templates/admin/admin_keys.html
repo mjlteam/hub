@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Keys — MJL-Team{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-6 py-12">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">
+        <div>
+            <h1 style="font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; color: var(--ink); margin: 0;">Server Keys</h1>
+            <p class="text-secondary body-small" style="margin-top: 2px;">{{ server_keys|length }} Key{% if server_keys|length != 1 %}s{% endif %} für Registrierungen</p>
+        </div>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-ghost btn-sm">Zurück zum Dashboard</a>
+    </div>
+
+    <div class="card" style="padding: 20px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 14px;">Neuen Key anlegen</h3>
+        <form method="post" style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: end;">
+            <input type="hidden" name="action" value="create">
+            <div>
+                <label class="form-label" for="create_name">Name</label>
+                <input id="create_name" name="name" type="text" class="input" placeholder="z. B. Sommeraktion">
+            </div>
+            <div>
+                <label class="form-label" for="create_key_value">Key-Wert</label>
+                <input id="create_key_value" name="key_value" type="text" class="input" placeholder="leer lassen für automatische Generierung" autocomplete="off">
+            </div>
+            <div>
+                <label class="form-label" for="create_max_uses">Max. Nutzung</label>
+                <input id="create_max_uses" name="max_uses" type="number" min="1" value="1" class="input">
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 6px;">
+                <input id="create_active" name="active" type="checkbox" checked>
+                <label for="create_active" class="body-small" style="margin: 0;">Aktiv</label>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary btn-block">Key anlegen</button>
+            </div>
+        </form>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for key in server_keys %}
+        <div class="card" style="padding: 20px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                        <span class="pill{% if not key.active %} pill-banned{% endif %}" style="font-size: 0.6875rem;">{% if key.active %}Aktiv{% else %}Deaktiviert{% endif %}</span>
+                        <span class="pill" style="font-size: 0.6875rem;">{{ key.uses_left }} / {{ key.max_uses }} Nutzungen</span>
+                    </div>
+                    <h3 style="margin: 0 0 4px 0;">#{{ key.id }} {{ key.name }}</h3>
+                    <p class="caption" style="margin: 0; font-family: var(--font-mono); word-break: break-all;">{{ key.key_value }}</p>
+                </div>
+                <form method="post" onsubmit="return confirm('Diesen Server-Key wirklich löschen?')">
+                    <input type="hidden" name="key_id" value="{{ key.id }}">
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-danger btn-sm">Löschen</button>
+                </form>
+            </div>
+
+            <form method="post" style="display: grid; gap: 16px;">
+                <input type="hidden" name="key_id" value="{{ key.id }}">
+                <input type="hidden" name="action" value="update">
+                <div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: end;">
+                    <div>
+                        <label class="form-label" for="name_{{ key.id }}">Name</label>
+                        <input id="name_{{ key.id }}" name="name" type="text" class="input" value="{{ key.name }}">
+                    </div>
+                    <div>
+                        <label class="form-label" for="key_value_{{ key.id }}">Key-Wert</label>
+                        <input id="key_value_{{ key.id }}" name="key_value" type="text" class="input" value="{{ key.key_value }}" autocomplete="off">
+                    </div>
+                    <div>
+                        <label class="form-label" for="max_uses_{{ key.id }}">Max. Nutzung</label>
+                        <input id="max_uses_{{ key.id }}" name="max_uses" type="number" min="1" class="input" value="{{ key.max_uses }}">
+                    </div>
+                    <div>
+                        <label class="form-label" for="uses_left_{{ key.id }}">Verbleibend</label>
+                        <input id="uses_left_{{ key.id }}" name="uses_left" type="number" min="0" class="input" value="{{ key.uses_left }}">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 6px;">
+                        <input id="active_{{ key.id }}" name="active" type="checkbox" {% if key.active %}checked{% endif %}>
+                        <label for="active_{{ key.id }}" class="body-small" style="margin: 0;">Aktiv</label>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="submit" class="btn btn-primary btn-block">Speichern</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+
+        {% if not server_keys %}
+        <div class="card" style="padding: 40px 20px; text-align: center;">
+            <p style="color: var(--text-tertiary);">Noch keine Server Keys angelegt.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

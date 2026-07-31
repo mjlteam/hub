@@ -1,11 +1,12 @@
 from functools import wraps
+import secrets
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from extensions import db
-from models import User, LoginSession
+from models import User, LoginSession, ServerKey
 
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -22,6 +23,10 @@ def _role_label(role: int | None) -> str:
 	return ROLE_OPTIONS.get(role or 1, f'Rolle {role}')
 
 
+def _generate_server_key() -> str:
+	return secrets.token_urlsafe(24)
+
+
 def admin_required(view_func):
 	@wraps(view_func)
 	@login_required
@@ -36,30 +41,32 @@ def admin_required(view_func):
 @bp.route('/')
 @admin_required
 def admin_dashboard():
-    total_users = User.query.count()
-    total_sessions = LoginSession.query.count()
-    recent_sessions = LoginSession.query.order_by(LoginSession.logged_in_at.desc()).limit(20).all()
-    admins = User.query.filter_by(role=10).count()
+	total_users = User.query.count()
+	total_sessions = LoginSession.query.count()
+	recent_sessions = LoginSession.query.order_by(LoginSession.logged_in_at.desc()).limit(20).all()
+	admins = User.query.filter_by(role=10).count()
+	server_keys = ServerKey.query.count()
 
-    # Per-browser stats
-    browser_stats = db.session.query(
-        LoginSession.browser, func.count(LoginSession.id).label('cnt')
-    ).group_by(LoginSession.browser).order_by(func.count(LoginSession.id).desc()).all()
+	# Per-browser stats
+	browser_stats = db.session.query(
+		LoginSession.browser, func.count(LoginSession.id).label('cnt')
+	).group_by(LoginSession.browser).order_by(func.count(LoginSession.id).desc()).all()
 
-    # Per-device stats
-    device_stats = db.session.query(
-        LoginSession.device_type, func.count(LoginSession.id).label('cnt')
-    ).group_by(LoginSession.device_type).order_by(func.count(LoginSession.id).desc()).all()
+	# Per-device stats
+	device_stats = db.session.query(
+		LoginSession.device_type, func.count(LoginSession.id).label('cnt')
+	).group_by(LoginSession.device_type).order_by(func.count(LoginSession.id).desc()).all()
 
-    return render_template(
-        'admin/admin_dashboard.html',
-        total_users=total_users,
-        total_sessions=total_sessions,
-        admins=admins,
-        recent_sessions=recent_sessions,
-        browser_stats=browser_stats,
-        device_stats=device_stats,
-    )
+	return render_template(
+		'admin/admin_dashboard.html',
+		total_users=total_users,
+		total_sessions=total_sessions,
+		admins=admins,
+		server_keys=server_keys,
+		recent_sessions=recent_sessions,
+		browser_stats=browser_stats,
+		device_stats=device_stats,
+	)
 
 @bp.route('/users', methods=['GET', 'POST'])
 @admin_required
@@ -155,6 +162,87 @@ def admin_users():
 		search=search,
 		sessions_by_user=sessions_by_user,
 	)
+
+
+@bp.route('/keys', methods=['GET', 'POST'])
+@admin_required
+def admin_keys():
+	if request.method == 'POST':
+		action = request.form.get('action', 'create')
+		key_id = request.form.get('key_id', type=int)
+		server_key = db.session.get(ServerKey, key_id) if key_id else None
+
+		if action == 'delete':
+			if server_key is None:
+				abort(404)
+			db.session.delete(server_key)
+			db.session.commit()
+			flash(f'Server-Key "{server_key.name}" wurde gelöscht.', 'success')
+			return redirect(url_for('admin.admin_keys'))
+
+		if action == 'toggle':
+			if server_key is None:
+				abort(404)
+			server_key.active = not server_key.active
+			db.session.commit()
+			flash(f'Server-Key "{server_key.name}" wurde aktualisiert.', 'success')
+			return redirect(url_for('admin.admin_keys'))
+
+		name = (request.form.get('name') or '').strip()
+		key_value = (request.form.get('key_value') or '').strip()
+		max_uses = request.form.get('max_uses', type=int) or 1
+		uses_left = request.form.get('uses_left', type=int)
+		active = request.form.get('active') == 'on'
+
+		if max_uses < 1:
+			flash('Die maximale Nutzung muss mindestens 1 sein.', 'error')
+			return redirect(url_for('admin.admin_keys'))
+
+		if action == 'create':
+			if not key_value:
+				key_value = _generate_server_key()
+			if not name:
+				name = f'Server Key {key_value[:8]}'
+			if ServerKey.query.filter_by(key_value=key_value).first():
+				flash('Dieser Key-Wert existiert bereits.', 'error')
+				return redirect(url_for('admin.admin_keys'))
+
+			server_key = ServerKey(
+				name=name,
+				key_value=key_value,
+				max_uses=max_uses,
+				uses_left=max_uses,
+				active=active,
+			)
+			db.session.add(server_key)
+			db.session.commit()
+			flash(f'Server-Key "{server_key.name}" wurde angelegt.', 'success')
+			return redirect(url_for('admin.admin_keys'))
+
+		if server_key is None:
+			abort(404)
+
+		if key_value and key_value != server_key.key_value:
+			duplicate = ServerKey.query.filter(ServerKey.key_value == key_value, ServerKey.id != server_key.id).first()
+			if duplicate:
+				flash('Dieser Key-Wert existiert bereits.', 'error')
+				return redirect(url_for('admin.admin_keys'))
+			server_key.key_value = key_value
+
+		if name:
+			server_key.name = name
+		server_key.max_uses = max_uses
+		if uses_left is not None:
+			server_key.uses_left = max(0, min(uses_left, max_uses))
+		else:
+			server_key.uses_left = min(server_key.uses_left, max_uses)
+		server_key.active = active
+		db.session.commit()
+		flash(f'Server-Key "{server_key.name}" wurde gespeichert.', 'success')
+		return redirect(url_for('admin.admin_keys'))
+
+	server_keys = ServerKey.query.order_by(ServerKey.created_at.desc()).all()
+	return render_template('admin/admin_keys.html', server_keys=server_keys)
 
 
 def init_module(app):

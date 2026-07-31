@@ -29,6 +29,21 @@ class User(UserMixin, db.Model):
         return f"<User {self.id} {self.username}>"
 
 
+class ServerKey(db.Model):
+    __tablename__ = 'server_keys'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    key_value = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    max_uses = db.Column(db.Integer, nullable=False, default=1, server_default=text('1'))
+    uses_left = db.Column(db.Integer, nullable=False, default=1, server_default=text('1'))
+    active = db.Column(db.Boolean, nullable=False, default=True, server_default=text('1'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self) -> str:
+        return f"<ServerKey {self.id} {self.name} uses_left={self.uses_left}>"
+
+
 class LoginSession(db.Model):
     __tablename__ = 'login_sessions'
     id = db.Column(db.Integer, primary_key=True)

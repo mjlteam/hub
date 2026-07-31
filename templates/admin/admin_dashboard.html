@@ -27,9 +27,9 @@
             <p class="caption" style="margin-top: 4px;">Erfasste Sessions</p>
         </div>
         <div class="card" style="padding: 20px;">
-            <p class="label" style="margin-bottom: 6px;">Letzte Logins</p>
-            <p class="display" style="font-size: 2rem; margin: 0;">{{ recent_sessions|length }}</p>
-            <p class="caption" style="margin-top: 4px;">In dieser Ansicht</p>
+            <p class="label" style="margin-bottom: 6px;">Server Keys</p>
+            <p class="display" style="font-size: 2rem; margin: 0;">{{ server_keys }}</p>
+            <p class="caption" style="margin-top: 4px;">Für Registrierungen</p>
         </div>
     </div>
 
@@ -79,7 +79,9 @@
     <div class="card" style="padding: 20px;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
             <h3 style="margin: 0;">Letzte Logins</h3>
-            <a href="{{ url_for('admin.admin_users') }}" class="btn btn-primary btn-sm">User Management →</a>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="{{ url_for('admin.admin_users') }}" class="btn btn-primary btn-sm">User Management →</a>
+            </div>
         </div>
         {% if recent_sessions %}
         <div class="overflow-x-auto">

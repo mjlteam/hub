@@ -40,7 +40,7 @@
                 {% for category, msg in messages %}
                 setTimeout(function(){
                     var id = Date.now() + Math.random();
-                    this.toasts.push({ id: id, category: '{{ category }}', msg: '{{ msg|e }}' });
+                    this.toasts.push({ id: id, category: {{ category|tojson }}, msg: {{ msg|tojson }} });
                     setTimeout(function(){
                         this.toasts = this.toasts.filter(function(t){ return t.id !== id; });
                     }.bind(this), 2500);

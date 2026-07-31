@@ -75,6 +75,14 @@
                     </svg>
                     Benutzer
                 </a>
+                <a href="{{ url_for('admin.admin_keys') }}"
+                    class="sidebar-link{% if request.endpoint == 'admin.admin_keys' %} sidebar-link--active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
+                        <path d="M10.5 10.5 3 18v3h3l2-2h2l2-2" />
+                    </svg>
+                    Server Keys
+                </a>
                 {% endif %}
             </nav>
 

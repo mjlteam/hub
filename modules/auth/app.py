@@ -3,12 +3,12 @@ import threading
 import time
 from urllib.parse import urlparse
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from extensions import db
-from models import User, LoginSession
+from models import User, LoginSession, ServerKey
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -17,6 +17,7 @@ USERNAME_RE = re.compile(r'^[A-Za-z0-9._-]{3,32}$')
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 MAX_PASSWORD_LEN = 128
 MAX_EMAIL_LEN = 200
+REGISTRATION_KEY_SESSION = 'registration_key_id'
 
 # Dummy hash so unknown usernames take the same time as known ones
 _DUMMY_HASH = generate_password_hash('mjl-dummy-password-for-timing')
@@ -158,6 +159,23 @@ def _track_login(user: User):
     db.session.commit()
 
 
+def _clear_registration_key():
+    session.pop(REGISTRATION_KEY_SESSION, None)
+
+
+def _get_verified_registration_key():
+    key_id = session.get(REGISTRATION_KEY_SESSION)
+    if not key_id:
+        return None
+
+    key = db.session.get(ServerKey, key_id)
+    if key is None or not key.active or key.uses_left <= 0:
+        _clear_registration_key()
+        return None
+
+    return key
+
+
 def _handle_login(template: str):
     """Shared login POST handling used by both login routes."""
     if request.method != 'POST':
@@ -219,12 +237,33 @@ def register():
     # Rate limit BEFORE the authenticated-redirect so bulk registrations
     if request.method == 'POST' and _rate_limited(_client_key('register')):
         flash('Zu viele Registrierungsversuche. Bitte warte kurz.', 'error')
-        return render_template('auth/register.html'), 429
+        return render_template('auth/register.html', key_verified=bool(_get_verified_registration_key())), 429
 
     # redirect authenticated users to hub
     if current_user.is_authenticated:
         return redirect(url_for('hub.hub'))
+
+    verified_key = _get_verified_registration_key()
+
+    if request.method == 'POST' and request.form.get('action') == 'clear_key':
+        _clear_registration_key()
+        return redirect(url_for('auth.register'))
+
     if request.method == 'POST':
+        if verified_key is None:
+            submitted_key = (request.form.get('server_key') or '').strip()
+            if not submitted_key:
+                flash('Bitte einen Server-Key eingeben.', 'error')
+                return render_template('auth/register.html', key_verified=False)
+
+            key = ServerKey.query.filter_by(key_value=submitted_key).first()
+            if key is None or not key.active or key.uses_left <= 0:
+                flash('Server-Key ist ungültig oder bereits aufgebraucht.', 'error')
+                return render_template('auth/register.html', key_verified=False)
+
+            session[REGISTRATION_KEY_SESSION] = key.id
+            flash(f'Server-Key "{key.name}" wurde bestätigt. Du kannst dich jetzt registrieren.', 'success')
+            return redirect(url_for('auth.register'))
 
         username = (request.form.get('username') or '').strip()
         email = (request.form.get('email') or '').strip() or None
@@ -232,47 +271,55 @@ def register():
 
         if not username or not password:
             flash('Benutzername und Passwort sind erforderlich', 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', key_verified=True)
 
         if not USERNAME_RE.match(username):
             flash('Benutzername: 3–32 Zeichen, nur Buchstaben, Zahlen, Punkt, Minus und Unterstrich', 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', key_verified=True)
 
         if len(password) > MAX_PASSWORD_LEN:
             flash('Passwort darf höchstens 128 Zeichen haben', 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', key_verified=True)
 
         if email:
             if len(email) > MAX_EMAIL_LEN or not EMAIL_RE.match(email):
                 flash('Bitte eine gültige E-Mail-Adresse angeben', 'error')
-                return render_template('auth/register.html')
+                return render_template('auth/register.html', key_verified=True)
 
         # Password policy check
         valid, reasons = validate_password(password, username)
         if not valid:
             flash('Passwort entspricht nicht der Sicherheitsrichtlinie: ' + '; '.join(reasons), 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', key_verified=True)
 
         if User.query.filter_by(username=username).first():
             flash('Benutzername bereits vergeben', 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', key_verified=True)
 
         if email and User.query.filter_by(email=email).first():
             flash('E-Mail bereits registriert', 'error')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', key_verified=True)
 
         user = User(username=username, email=email, role=1)
         user.set_password(password)
+        verified_key = _get_verified_registration_key()
+        if verified_key is None:
+            flash('Bitte zuerst einen gültigen Server-Key bestätigen.', 'error')
+            return render_template('auth/register.html', key_verified=False)
+
+        verified_key.uses_left = max(verified_key.uses_left - 1, 0)
+        _clear_registration_key()
         db.session.add(user)
         db.session.commit()
         login_user(user)
         return redirect(url_for('hub.hub'))
-    return render_template('auth/register.html')
+    return render_template('auth/register.html', key_verified=bool(verified_key))
 
 
 @bp.route('/logout')
 @login_required
 def logout():
+    _clear_registration_key()
     logout_user()
     return redirect(url_for('auth.login'))
 

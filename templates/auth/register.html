@@ -3,14 +3,52 @@
 {% block title %}Registrieren — MJL-Team{% endblock %}
 
 {% block content %}
-<div class="auth-container" x-data="registerForm()">
+<div class="auth-container" x-data="registerForm()" x-cloak>
     <div class="auth-card">
 
         <div class="auth-header">
             <h2>Registrieren</h2>
         </div>
 
+        {% if key_verified %}
+        <div class="card card-padded" style="margin-bottom: 16px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                <div>
+                    <p class="label" style="margin-bottom: 6px;">Server-Key bestätigt</p>
+                    <p class="body-small" style="margin: 0; color: var(--text-secondary);">Du kannst jetzt ein neues Konto anlegen.</p>
+                </div>
+                <form method="post">
+                    <input type="hidden" name="action" value="clear_key">
+                    <button type="submit" class="btn btn-ghost btn-sm">Anderen Key verwenden</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="skel-stack">
+            {% if not key_verified %}
+            <div class="card card-padded skel-overlay">
+                <div class="skel skel-label"></div>
+                <div class="skel skel-input"></div>
+                <div class="skel skel-btn"></div>
+            </div>
+
+            <div class="card card-padded">
+                <form method="post" class="space-y-5" @submit="submitting = true">
+                    <div class="form-group">
+                        <label for="server_key" class="form-label">Server-Key</label>
+                        <input id="server_key" name="server_key" type="text" class="input" placeholder="Key eingeben" autocomplete="off" required autofocus value="{{ request.form.get('server_key', '') }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting">
+                        <span x-show="!submitting">Key prüfen</span>
+                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
+                            <span class="spinner spinner--xl btn-loading-spinner"></span>
+                        </span>
+                    </button>
+                </form>
+            </div>
+            {% else %}
             <div class="card card-padded skel-overlay">
                 <div class="skel skel-label"></div>
                 <div class="skel skel-input"></div>
@@ -65,11 +103,14 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting || !isStrong">
-                        <span>Konto erstellen</span>
-                        <span class="spinner spinner--xl btn-loading-spinner"></span>
+                        <span x-show="!submitting">Konto erstellen</span>
+                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
+                            <span class="spinner spinner--xl btn-loading-spinner"></span>
+                        </span>
                     </button>
                 </form>
             </div>
+            {% endif %}
         </div>
 
         <div class="auth-footer">
