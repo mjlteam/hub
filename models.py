@@ -1,5 +1,6 @@
 from extensions import db
 from flask_login import UserMixin
+from flask import url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy import text
@@ -13,6 +14,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=1, server_default=text('1'))
     banned = db.Column(db.Boolean, nullable=False, default=False, server_default=text('0'))
+    avatar = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -25,6 +27,13 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def avatar_url(self) -> str | None:
+        """Static URL of the uploaded avatar, or None if not set."""
+        if not self.avatar:
+            return None
+        return url_for('static', filename=f'uploads/avatars/{self.avatar}')
 
     def __repr__(self) -> str:
         return f"<User {self.id} {self.username}>"

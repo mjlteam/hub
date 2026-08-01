@@ -39,6 +39,11 @@ def ensure_user_columns():
         db.session.execute(text('ALTER TABLE users ADD COLUMN banned BOOLEAN NOT NULL DEFAULT 0'))
         db.session.commit()
 
+    if 'avatar' not in columns:
+        print('Adding missing users.avatar column...')
+        db.session.execute(text('ALTER TABLE users ADD COLUMN avatar VARCHAR(255)'))
+        db.session.commit()
+
 
 
 def seed_admin():

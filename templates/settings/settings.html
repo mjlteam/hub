@@ -6,6 +6,34 @@
 <section style="max-width: 480px; padding: 32px 24px;">
     <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 24px;">Einstellungen</h2>
 
+    <!-- Profilbild -->
+    <div class="card" style="padding: 20px; margin-bottom: 16px;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 12px;">Profilbild</h3>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="avatar-preview">
+                {% if current_user.avatar %}
+                <img src="{{ current_user.avatar_url }}" alt="{{ current_user.username }}">
+                {% else %}
+                <span>{{ current_user.username[0]|upper }}</span>
+                {% endif %}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <form method="post" enctype="multipart/form-data" style="display: flex; gap: 8px; align-items: center;">
+                    <input type="hidden" name="action" value="upload_avatar">
+                    <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif" class="input" style="padding: 6px 10px; font-size: 0.8125rem; flex: 1; min-width: 0;" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Hochladen</button>
+                </form>
+                {% if current_user.avatar %}
+                <form method="post" style="margin-top: 8px;">
+                    <input type="hidden" name="action" value="remove_avatar">
+                    <button type="submit" class="btn btn-ghost btn-sm">Entfernen</button>
+                </form>
+                {% endif %}
+                <span class="caption" style="color: var(--text-tertiary); display: block; margin-top: 8px;">JPG, PNG, WebP oder GIF · max. 5 MB · wird quadratisch zugeschnitten</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Theme -->
     <div class="card" style="padding: 20px; margin-bottom: 16px;">
         <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 12px;">Erscheinungsbild</h3>

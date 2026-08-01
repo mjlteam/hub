@@ -72,7 +72,11 @@
                 {{ item.content }}
             </p>
             <div style="display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-soft);">
+                {% if item.author and item.author.avatar %}
+                <img class="sidebar-profile-avatar" style="width: 22px; height: 22px;" src="{{ item.author.avatar_url }}" alt="{{ item.author.username }}">
+                {% else %}
                 <span class="sidebar-profile-avatar" style="width: 22px; height: 22px; font-size: 0.6875rem;">{{ item.author.username[0]|upper if item.author else '?' }}</span>
+                {% endif %}
                 <span class="caption" style="color: var(--text-secondary);">{{ item.author.username if item.author else 'Unbekannt' }}</span>
                 <span class="caption" style="color: var(--text-tertiary); margin-left: auto;">{{ reading_minutes_map.get(item.id, 1) }} Min.</span>
             </div>
