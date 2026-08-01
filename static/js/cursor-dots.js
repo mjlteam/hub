@@ -38,6 +38,7 @@
             u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
             u_cursor: { value: new THREE.Vector2(-9999, -9999) },
             u_dark: { value: document.documentElement.getAttribute('data-theme') === 'dark' ? 1.0 : 0.0 },
+            u_oled: { value: document.documentElement.hasAttribute('data-oled') ? 1.0 : 0.0 },
         };
 
         const material = new THREE.ShaderMaterial({
@@ -57,6 +58,7 @@
                 uniform vec2 u_resolution;
                 uniform vec2 u_cursor;
                 uniform float u_dark;
+                uniform float u_oled;
 
                 void main() {
                     // Convert UV to pixel coords
@@ -89,9 +91,10 @@
                     vec3 bgLight  = vec3(1.0, 1.0, 1.0);
                     vec3 dotLight = vec3(0.0, 0.0, 0.0);
                     vec3 bgDark   = vec3(0.098, 0.098, 0.094); // #191918
+                    vec3 bgOled   = vec3(0.0, 0.0, 0.0);       // #000000 (OLED)
                     vec3 dotDark  = vec3(0.945, 0.945, 0.937); // #f1f1ef
 
-                    vec3 bg  = mix(bgLight,  bgDark,  u_dark);
+                    vec3 bg  = mix(mix(bgLight, bgDark, u_dark), bgOled, u_oled);
                     vec3 dotClr = mix(dotLight, dotDark, u_dark);
                     vec3 color = mix(bg, dotClr, alpha * 0.55);
 
@@ -132,7 +135,9 @@
 
         // Listen for theme changes
         window.addEventListener('themechange', function (e) {
-            uniforms.u_dark.value = e.detail.theme === 'dark' ? 1.0 : 0.0;
+            var t = e.detail.theme;
+            uniforms.u_dark.value = (t === 'dark' || t === 'oled') ? 1.0 : 0.0;
+            uniforms.u_oled.value = t === 'oled' ? 1.0 : 0.0;
         });
     }
 

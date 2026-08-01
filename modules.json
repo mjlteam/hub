@@ -19,6 +19,11 @@
       "name": "settings",
       "package": "modules.settings",
       "enabled": true
+    },
+    {
+      "name": "news",
+      "package": "modules.news",
+      "enabled": true
     }
   ]
 }

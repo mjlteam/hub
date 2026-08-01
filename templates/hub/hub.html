@@ -3,7 +3,55 @@
 {% block title %}Hub — MJL-Team{% endblock %}
 
 {% block content %}
-<div class="fade-in" style="display: flex; align-items: center; justify-content: center; min-height: 40vh;">
-    <h2 class="display" style="font-size: clamp(1.5rem, 3vw, 2rem); color: var(--ink);">Willkommen</h2>
+<div class="fade-in max-w-5xl mx-auto px-6 py-12">
+    <!-- Welcome — immer sofort sichtbar, nicht vom Skeleton überdeckt -->
+    <div style="margin-bottom: 48px;">
+        <h1 class="display" style="font-size: clamp(1.75rem, 3vw, 2.25rem); margin-bottom: 4px; color: var(--ink);">Willkommen, {{ current_user.username }}</h1>
+        <p class="text-secondary">Alles Wichtige fürs Team auf einen Blick.</p>
+    </div>
+
+    <!-- News-Teaser mit Skeleton-Overlay (nur dieser Bereich) -->
+    <div class="skel-stack">
+        <div class="skel-overlay">
+            <div class="skel" style="height: 28px; width: 200px; margin-bottom: 16px;"></div>
+            <div style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                <div class="skel" style="height: 150px; border-radius: var(--radius-lg);"></div>
+                <div class="skel" style="height: 150px; border-radius: var(--radius-lg);"></div>
+                <div class="skel" style="height: 150px; border-radius: var(--radius-lg);"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.375rem; color: var(--ink); margin: 0;">Aktuelle News</h2>
+            <a href="{{ url_for('news.news') }}"
+               hx-get="{{ url_for('news.news') }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+               preload="mouseover"
+               class="btn btn-ghost btn-sm">Alle ansehen →</a>
+        </div>
+
+        {% if latest_news %}
+        <div style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            {% for item in latest_news %}
+            <a href="{{ url_for('news.post', news_id=item.id) }}"
+               hx-get="{{ url_for('news.post', news_id=item.id) }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+               preload="mouseover"
+               class="card" style="padding: 20px; text-decoration: none; display: block;{% if item.pinned %} border-color: var(--teal);{% endif %}">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    {% if item.pinned %}<span class="pill pill-blue" style="font-size: 0.625rem;">Angeheftet</span>{% endif %}
+                    <span class="caption" style="color: var(--text-tertiary);">{{ item.created_at.strftime('%d.%m.%Y') if item.created_at else '' }}</span>
+                </div>
+                <p style="font-weight: 600; color: var(--ink); margin: 0 0 6px 0; font-size: 0.9375rem; line-height: 1.4;">{{ item.title }}</p>
+                <p class="body-small" style="color: var(--text-secondary); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    {{ item.content }}
+                </p>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card" style="padding: 32px 24px; text-align: center;">
+            <p class="text-tertiary body-small" style="margin: 0;">Noch keine News vorhanden.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

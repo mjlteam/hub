@@ -5,9 +5,9 @@
 /* --- Design Tokens --- */
 :root {
     /* Primary */
-    --bg: #ffffff;
-    --muted-bg: #fafafa;
-    --card-bg: #ffffff;
+    --bg: #F8F8F7;
+    --muted-bg: #f2f2f1;
+    --card-bg: #F8F8F7;
     --ink: #0d0d0d;
     --soft-ink: #1a1a1a;
 
@@ -16,6 +16,12 @@
     --teal-deep: #0a7a5e;
     --teal-soft: #e8f5f0;
 
+    /* Blue Accent (einheitlich im Light Mode) */
+    --blue: #2563eb;
+    --blue-deep: #1e40af;
+    --blue-soft: #dbeafe;
+    --blue-soft-hover: #bfdbfe;
+
     /* Neutrals & Text */
     --text-body: #3c3c3c;
     --text-secondary: #6e6e6e;
@@ -23,7 +29,7 @@
     --text-disabled: #c4c4c4;
 
     /* Surfaces */
-    --surface-mist: #fafafa;
+    --surface-mist: #f2f2f1;
     --surface-pearl: #f5f5f5;
     --surface-cloud: #ececec;
 
@@ -55,7 +61,6 @@
 
     /* Typography */
     --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    --font-serif: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
     --font-mono: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
 
     /* Motion */
@@ -80,6 +85,12 @@
     --teal: #529cca;
     --teal-deep: #63a9d3;
     --teal-soft: rgba(82, 156, 202, 0.14);
+
+    /* Blue Accent (Dark Mode) */
+    --blue: #7DD3FC;
+    --blue-deep: #7DD3FC;
+    --blue-soft: rgba(125, 211, 252, 0.14);
+    --blue-soft-hover: rgba(125, 211, 252, 0.20);
 
     /* Neutrals & Text */
     --text-body: #d1d0cc;
@@ -164,9 +175,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .display {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(2.5rem, 5vw, 3.5rem);
-    font-weight: 400;
+    font-weight: 600;
     line-height: 1.08;
     letter-spacing: -0.02em;
 }
@@ -535,15 +546,12 @@ input:-webkit-autofill:focus {
 .input::placeholder {
     color: var(--text-tertiary);
     transition: color 0.2s var(--ease-out);
-}
-
-.input:focus {
+}    .input:focus {
     outline: none;
     border-color: #262626;
     box-shadow:
         0 0 0 3px rgba(38, 38, 38, 0.08),
         0 2px 8px rgba(13, 13, 13, 0.04);
-    background: #ffffff;
     transform: translateY(-1px);
 }
 
@@ -670,6 +678,14 @@ input:-webkit-autofill:focus {
     color: var(--teal-deep);
 }
 
+.pill-blue {
+    background: var(--blue-soft);
+    color: var(--blue-deep);
+}
+[data-theme="dark"] .pill-blue {
+    color: var(--blue);
+}
+
 .pill-error {
     background: var(--error-soft);
     color: var(--error);
@@ -768,16 +784,23 @@ input:-webkit-autofill:focus {
 }
 
 .sidebar-link--active {
-    background: var(--surface-cloud);
-    color: var(--ink);
+    background: var(--blue-soft);
+    color: var(--blue-deep);
     font-weight: 600;
 }
+.sidebar-link--active:hover {
+    background: var(--blue-soft-hover);
+}
 
+[data-theme="dark"] .sidebar-link--active {
+    background: var(--blue-soft);
+    color: var(--blue);
+}
+[data-theme="dark"] .sidebar-link--active:hover {
+    background: var(--blue-soft-hover);
+}
 [data-theme="dark"] .sidebar-link:hover {
     background: #292928;
-}
-[data-theme="dark"] .sidebar-link--active {
-    background: #30302f;
 }
 
 .sidebar-link svg {
@@ -1443,9 +1466,9 @@ input:-webkit-autofill:focus {
 }
 
 .split-brand-headline {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: clamp(1.75rem, 3vw, 2.5rem);
-    font-weight: 400;
+    font-weight: 600;
     line-height: 1.2;
     letter-spacing: -0.01em;
     margin-bottom: 12px;
@@ -1917,19 +1940,6 @@ input:-webkit-autofill:focus {
         box-shadow 0.45s var(--ease-out);
 }
 
-<<<<<<< HEAD
-.pw-meter__bar:nth-child(2) {
-    transition-delay: 45ms;
-}
-
-.pw-meter__bar:nth-child(3) {
-    transition-delay: 90ms;
-}
-
-.pw-meter__bar:nth-child(4) {
-    transition-delay: 135ms;
-}
-=======
 [data-theme="dark"] .pw-meter__bar {
     background: rgba(255, 255, 255, 0.1);
 }
@@ -1937,7 +1947,6 @@ input:-webkit-autofill:focus {
 .pw-meter__bar:nth-child(2) { transition-delay: 45ms; }
 .pw-meter__bar:nth-child(3) { transition-delay: 90ms; }
 .pw-meter__bar:nth-child(4) { transition-delay: 135ms; }
->>>>>>> 5ae59e1b14dcf87b0afc46716aed7524fff7da1c
 
 /* Beim Löschen (Backspace) sofort zurückschrumpfen statt mit Verzögerung */
 .pw-meter__bar:not(.pw-meter__bar--active) {
@@ -1973,18 +1982,6 @@ input:-webkit-autofill:focus {
 }
 
 @keyframes fadeIn {
-<<<<<<< HEAD
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-=======
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
@@ -2343,4 +2340,103 @@ input[type="number"] {
     background: var(--border-soft);
     margin: 2px 4px;
 }
->>>>>>> 5ae59e1b14dcf87b0afc46716aed7524fff7da1c
+
+/* ============================================================
+   OLED Dark Mode — echtes Schwarz (nur in Settings aktivierbar)
+   data-theme="dark" + data-oled → Dark-Regeln gelten, nur Flächen werden schwarz
+   ============================================================ */
+[data-oled] {
+    /* Surfaces — True Black */
+    --bg: #000000;
+    --muted-bg: #0D0D0D;
+    --card-bg: #0D0D0D;
+
+    /* Surfaces */
+    --surface-mist: #0D0D0D;
+    --surface-pearl: #0D0D0D;
+    --surface-cloud: #1a1a1a;
+
+    /* Borders — etwas kräftiger auf Schwarz */
+    --border-hairline: rgba(255, 255, 255, 0.12);
+    --border-soft: rgba(255, 255, 255, 0.08);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.30);
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.40);
+}
+
+/* Autofill auf OLED — echtes Schwarz statt #191918 */
+[data-oled] input:-webkit-autofill,
+[data-oled] input:-webkit-autofill:hover,
+[data-oled] input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #000000 inset !important;
+    -webkit-text-fill-color: #f1f1ef !important;
+}
+
+/* Input-Fokus auf OLED — dunkle Fläche */
+[data-oled] .input:focus {
+    background: #0D0D0D;
+}
+
+/* Selection auf OLED */
+[data-oled] ::selection {
+    background: #529cca;
+    color: #000000;
+}
+[data-oled] ::-moz-selection {
+    background: #529cca;
+    color: #000000;
+}
+
+/* Spinner auf OLED */
+[data-oled] .spinner {
+    background: conic-gradient(from 0deg, #000000, #000000 60deg, rgba(0, 0, 0, 0.3) 180deg, #000000 300deg, #000000 360deg);
+}
+
+/* Skeleton-Bars auf OLED */
+[data-oled] .skel {
+    background: #0D0D0D;
+}
+
+/* Feste Grautöne aus Dark-Regeln auf OLED ebenfalls auf echtes Schwarz ziehen */
+[data-oled] .toast--error {
+    background: #0D0D0D;
+}
+[data-oled] .toggle-switch-track {
+    background: #0D0D0D;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+[data-oled] .sidebar-profile-avatar {
+    background: #0D0D0D;
+}
+[data-oled] .btn-secondary {
+    background: #0D0D0D;
+    color: #f1f1ef;
+}
+[data-oled] .btn-secondary:hover {
+    background: #1a1a1a;
+}
+[data-oled] .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+[data-oled] .sidebar-link:hover,
+[data-oled] .sidebar-profile-btn:hover,
+[data-oled] .sidebar-profile-item:hover,
+[data-oled] .nav-link:hover,
+[data-oled] .fab-dropdown-item:hover {
+    background: #1a1a1a;
+}
+[data-oled] .copy-btn,
+[data-oled] .share-link-badge {
+    background: #0D0D0D;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+[data-oled] .copy-btn:hover,
+[data-oled] .share-link-badge:hover {
+    background: #1a1a1a;
+}
+[data-oled] .sidebar-theme-btn:hover,
+[data-oled] .header-theme-btn:hover,
+[data-oled] .header-nav #theme-toggle:hover {
+    background: #1a1a1a;
+}

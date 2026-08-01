@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.title }} — News MJL-Team{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-6 py-12">
+    <!-- Breadcrumb / Rück-Link -->
+    <nav style="margin-bottom: 32px;">
+        <a href="{{ url_for('news.news') }}"
+           hx-get="{{ url_for('news.news') }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+           preload="mouseover"
+           class="footer-link" style="display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Zurück zu allen News
+        </a>
+    </nav>
+
+    <!-- Artikel-Header -->
+    <header style="margin-bottom: 40px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+            {% if item.pinned %}
+            <span class="pill pill-blue" style="font-size: 0.6875rem;">Angeheftet</span>
+            {% endif %}
+            <span class="label" style="color: var(--blue);">News</span>
+        </div>
+        <h1 class="display" style="font-size: clamp(1.75rem, 4vw, 2.5rem); color: var(--ink); margin: 0 0 20px 0; line-height: 1.2;">{{ item.title }}</h1>
+
+        <!-- Meta-Zeile: Autor, Datum, Lesezeit, Copy-Link -->
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="sidebar-profile-avatar" style="width: 28px; height: 28px; font-size: 0.8125rem;">{{ item.author.username[0]|upper if item.author else '?' }}</span>
+                <span class="body-small" style="color: var(--ink); font-weight: 500;">{{ item.author.username if item.author else 'Unbekannt' }}</span>
+            </div>
+            <span class="caption" style="color: var(--text-tertiary);">·</span>
+            <span class="caption" style="color: var(--text-secondary);">{{ item.created_at.strftime('%d.%m.%Y') if item.created_at else '' }}</span>
+            <span class="caption" style="color: var(--text-tertiary);">·</span>
+            <span class="caption" style="color: var(--text-secondary);">{{ reading_minutes }} Min. Lesezeit</span>
+
+            <button id="copy-link" class="btn btn-ghost btn-sm" style="margin-left: auto;"
+                    onclick="navigator.clipboard.writeText(window.location.href); this.textContent='Link kopiert!'; setTimeout(() => this.textContent='Link teilen', 2000);">
+                Link teilen
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero-Medium: dezenter Banner als Platzhalter für Artikelbild -->
+    <div style="height: 110px; border-radius: 16px; margin-bottom: 40px; background: linear-gradient(135deg, var(--blue-soft) 0%, var(--surface-mist) 100%); border: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: center;">
+        <span style="color: var(--blue-deep); letter-spacing: 0.14em; font-size: 0.6875rem; font-weight: 500;">MJL-TEAM NEWS</span>
+    </div>
+
+    <!-- Artikel-Body: schmale Lesespalte -->
+    <div style="max-width: 680px; margin: 0 auto;">
+        <div style="color: var(--text-body); font-size: 1.0625rem; line-height: 1.75; white-space: pre-line;">
+            {{ item.content }}
+        </div>
+    </div>
+
+    <!-- Navigation zwischen Artikeln -->
+    <nav style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 48px 0; border-top: 1px solid var(--border-soft); padding-top: 32px;">
+        <div>
+            {% if prev_item %}
+            <p class="label" style="margin-bottom: 6px;">← Vorheriger Artikel</p>
+            <a href="{{ url_for('news.post', news_id=prev_item.id) }}"
+               hx-get="{{ url_for('news.post', news_id=prev_item.id) }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+               preload="mouseover"
+               style="color: var(--ink); font-weight: 600; text-decoration: none;">{{ prev_item.title }}</a>
+            {% endif %}
+        </div>
+        <div style="text-align: right;">
+            {% if next_item %}
+            <p class="label" style="margin-bottom: 6px;">Nächster Artikel →</p>
+            <a href="{{ url_for('news.post', news_id=next_item.id) }}"
+               hx-get="{{ url_for('news.post', news_id=next_item.id) }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+               preload="mouseover"
+               style="color: var(--ink); font-weight: 600; text-decoration: none;">{{ next_item.title }}</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Weiterlesen: Verwandte Artikel -->
+    {% if related %}
+    <section style="border-top: 1px solid var(--border-soft); padding-top: 40px;">
+        <h2 class="display" style="font-size: 1.5rem; color: var(--ink); margin: 0 0 20px 0;">Weiterlesen</h2>
+        <div style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+            {% for rel in related %}
+            <a href="{{ url_for('news.post', news_id=rel.id) }}"
+               hx-get="{{ url_for('news.post', news_id=rel.id) }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+               preload="mouseover"
+               class="card" style="padding: 20px; text-decoration: none; display: block;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    {% if rel.pinned %}<span class="pill pill-blue" style="font-size: 0.625rem;">Angeheftet</span>{% endif %}
+                    <span class="caption" style="color: var(--text-tertiary);">{{ rel.created_at.strftime('%d.%m.%Y') if rel.created_at else '' }}</span>
+                </div>
+                <p style="font-weight: 600; color: var(--ink); margin: 0; font-size: 0.9375rem; line-height: 1.4;">{{ rel.title }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</article>
+{% endblock %}

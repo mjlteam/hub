@@ -68,4 +68,18 @@ class LoginSession(db.Model):
         return f"<LoginSession {self.id} user={self.user_id} at {self.logged_in_at}>"
 
 
+class News(db.Model):
+    __tablename__ = 'news'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    pinned = db.Column(db.Boolean, nullable=False, default=False, server_default=text('0'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Relationships
+    author = db.relationship('User', foreign_keys=[author_id])
+
+    def __repr__(self) -> str:
+        return f"<News {self.id} {self.title}>"
