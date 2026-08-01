@@ -3,6 +3,7 @@
 {% block body_class %}split-page font-sans antialiased{% endblock %}
 
 {% block layout %}
+{% include "toasts.html" %}
 <div class="split-page" x-data="{ showPw: false, submitting: false }">
 
     <aside class="split-brand">

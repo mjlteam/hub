@@ -17,7 +17,8 @@ class User(UserMixin, db.Model):
 
     # Relationships
     login_sessions = db.relationship('LoginSession', back_populates='user', lazy='dynamic',
-                                      order_by='LoginSession.logged_in_at.desc()')
+                                      order_by='LoginSession.logged_in_at.desc()',
+                                      cascade='all, delete-orphan')
 
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)

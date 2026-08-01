@@ -193,7 +193,7 @@ def _handle_login(template: str):
         with _attempts_lock:
             _attempts.pop(_client_key('login'), None)
         _track_login(user)
-        login_user(user)
+        login_user(user, remember=bool(request.form.get('remember')))
         next_url = request.args.get('next') or request.form.get('next')
         if _is_safe_next(next_url):
             return redirect(next_url)

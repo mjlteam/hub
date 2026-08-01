@@ -4,14 +4,34 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from flask import Flask, Blueprint, jsonify, render_template
+from flask import Flask, Blueprint, flash, jsonify, redirect, render_template, url_for
 from dotenv import load_dotenv
 from extensions import db, login_manager
 from models import User
+from flask_login import current_user, logout_user
 from datetime import datetime
 
 # Load .env from project root (if present)
 load_dotenv()
+
+
+# Cache the git commit short id — do not spawn a subprocess on every request
+_commit_cache = None
+
+
+def get_git_commit(project_root: Path) -> str | None:
+    """Return the short git commit id of project_root, computed once and cached."""
+    global _commit_cache
+    if _commit_cache is None:
+        try:
+            _commit_cache = subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=project_root,
+                stderr=subprocess.DEVNULL,
+            ).decode().strip()
+        except Exception:
+            _commit_cache = ''
+    return _commit_cache or None
 
 
 def create_app():
@@ -86,7 +106,7 @@ def create_app():
             if pkg.endswith('auth'):
                 @login_manager.user_loader
                 def load_user(user_id):
-                    return User.query.get(int(user_id))
+                    return db.session.get(User, int(user_id))
 
             if hasattr(mod, 'bp'):
                 try:
@@ -103,16 +123,17 @@ def create_app():
     @app.context_processor
     def inject_now():
         # include current UTC datetime factory and git commit short id if available
-        commit = None
-        try:
-            import subprocess
+        return {"now": datetime.utcnow, "version": get_git_commit(project_root)}
 
-            commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=project_root, stderr=subprocess.DEVNULL).decode().strip()
-        except Exception:
-            commit = None
 
-        return {"now": datetime.utcnow, "version": commit}
-
+    # Log out banned users on their next request — the ban must take effect
+    # immediately, not only on the next login attempt.
+    @app.before_request
+    def enforce_bans():
+        if current_user.is_authenticated and current_user.banned:
+            logout_user()
+            flash('Dieser Account wurde gesperrt.', 'error')
+            return redirect(url_for('auth.login'))
 
     @app.errorhandler(404)
     def page_not_found(e):

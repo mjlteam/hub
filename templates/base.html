@@ -32,7 +32,9 @@
     {% if current_user.is_authenticated %}
 
     <!-- ========== SIDEBAR + CONTENT ========== -->
-    <div class="app-shell" x-data="{ sidebarOpen: false, profileOpen: false, dark: localStorage.getItem('theme') === 'dark' }" x-init="$watch('dark', v => { const html = document.documentElement; html.setAttribute('data-theme', v ? 'dark' : 'light'); localStorage.setItem('theme', v ? 'dark' : 'light'); window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: v ? 'dark' : 'light' } })); })">
+    <div class="app-shell" x-data="{ sidebarOpen: false, profileOpen: false, dark: localStorage.getItem('theme') === 'dark' }"
+         @themechange.window="dark = $event.detail.theme === 'dark'"
+         x-init="$watch('dark', v => { const html = document.documentElement; html.setAttribute('data-theme', v ? 'dark' : 'light'); localStorage.setItem('theme', v ? 'dark' : 'light'); window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: v ? 'dark' : 'light' } })); })">
         <div class="sidebar-overlay" :class="{ 'sidebar-overlay--visible': sidebarOpen }" @click="sidebarOpen = false"></div>
 
         <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }" @click.outside="profileOpen = false">

@@ -100,7 +100,7 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <form method="post" onsubmit="return confirm('{{ key.name }} wirklich löschen?')" @click.stop="">
+                    <form method="post" onsubmit='return confirm({{ (key.name ~ " wirklich löschen?")|tojson }})' @click.stop="">
                         <input type="hidden" name="key_id" value="{{ key.id }}">
                         <input type="hidden" name="action" value="delete">
                         <button type="submit" class="btn btn-danger btn-sm">Löschen</button>
