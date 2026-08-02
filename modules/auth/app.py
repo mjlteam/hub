@@ -1,14 +1,21 @@
 import re
 import threading
+from datetime import datetime
 import time
 from urllib.parse import urlparse
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from flask_login import login_user, logout_user, login_required, current_user
+from authlib.integrations.base_client.errors import MismatchingStateError, OAuthError
+from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from requests import RequestException
+from sqlalchemy import or_, update
+from sqlalchemy.exc import SQLAlchemyError
+from flask_login import current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from extensions import db
-from models import User, LoginSession, ServerKey
+from models import User, LoginSession, ServerKey, RegistrationSettings
+from modules.auth import oauth
+from modules.auth.csrf import csrf_protect, rotate_csrf
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -18,6 +25,7 @@ EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 MAX_PASSWORD_LEN = 128
 MAX_EMAIL_LEN = 200
 REGISTRATION_KEY_SESSION = 'registration_key_id'
+PENDING_GITHUB_SESSION = 'pending_github'
 
 # Dummy hash so unknown usernames take the same time as known ones
 _DUMMY_HASH = generate_password_hash('mjl-dummy-password-for-timing')
@@ -57,6 +65,27 @@ def _is_safe_next(url: str | None) -> bool:
         return False
     parsed = urlparse(url)
     return not parsed.scheme and not parsed.netloc
+
+
+def _github_response_json(response):
+    """Validate a GitHub response and return its JSON payload."""
+    response.raise_for_status()
+    payload = response.json()
+    if not payload:
+        raise ValueError('GitHub returned an empty response')
+    return payload
+
+
+def _extract_github_email(emails):
+    """Return only GitHub's primary, verified email address."""
+    if not isinstance(emails, list):
+        return None
+    primary = next(
+        (item.get('email') for item in emails
+         if isinstance(item, dict) and item.get('primary') and item.get('verified') and item.get('email')),
+        None,
+    )
+    return primary
 
 
 def _authenticate(username: str, password: str):
@@ -134,7 +163,7 @@ def _track_login(user: User):
     ua = request.headers.get('User-Agent', '')
     browser, browser_version, os_name, os_version, device_type = _parse_user_agent(ua)
 
-    session = LoginSession(
+    login_session = LoginSession(
         user_id=user.id,
         ip_address=request.remote_addr or 'unknown',
         user_agent=ua[:500] if ua else None,
@@ -147,7 +176,7 @@ def _track_login(user: User):
         screen_height=request.form.get('screen_h', type=int),
         language=(request.form.get('lang') or '')[:10] or None,
     )
-    db.session.add(session)
+    db.session.add(login_session)
     db.session.commit()
 
     # Keep only the 2 latest sessions per user
@@ -159,20 +188,41 @@ def _track_login(user: User):
     db.session.commit()
 
 
-def _clear_registration_key():
+def _registration_settings() -> RegistrationSettings:
+    """Return the singleton registration policy row."""
+    settings = db.session.get(RegistrationSettings, 1)
+    if settings is None:
+        settings = RegistrationSettings(id=1, server_keys_required=True)
+        db.session.add(settings)
+        db.session.commit()
+    return settings
+
+
+def _server_keys_required() -> bool:
+    return bool(_registration_settings().server_keys_required)
+
+
+def _clear_registration_key() -> None:
     session.pop(REGISTRATION_KEY_SESSION, None)
 
 
-def _get_verified_registration_key():
+def _pending_github() -> dict | None:
+    payload = session.get(PENDING_GITHUB_SESSION)
+    return payload if isinstance(payload, dict) else None
+
+
+def _clear_pending_github() -> None:
+    session.pop(PENDING_GITHUB_SESSION, None)
+
+
+def _verified_registration_key():
     key_id = session.get(REGISTRATION_KEY_SESSION)
     if not key_id:
         return None
-
     key = db.session.get(ServerKey, key_id)
-    if key is None or not key.active or key.uses_left <= 0:
+    if key is None or not key.is_currently_active or key.uses_left <= 0:
         _clear_registration_key()
         return None
-
     return key
 
 
@@ -193,7 +243,10 @@ def _handle_login(template: str):
         with _attempts_lock:
             _attempts.pop(_client_key('login'), None)
         _track_login(user)
+        session.clear()
         login_user(user, remember=bool(request.form.get('remember')))
+        session['user_id'] = user.id
+        rotate_csrf()
         next_url = request.args.get('next') or request.form.get('next')
         if _is_safe_next(next_url):
             return redirect(next_url)
@@ -209,7 +262,121 @@ def _handle_login(template: str):
     return None
 
 
+@bp.route('/login/github')
+def github_login():
+    """Start GitHub OAuth only after the registration gate is satisfied."""
+    if current_user.is_authenticated:
+        return redirect(url_for('hub.dashboard'))
+    if _server_keys_required() and _verified_registration_key() is None:
+        # Continue the OAuth request only after the registration gate; the
+        # gate page itself never exposes a GitHub button.
+        session['oauth_after_key'] = True
+        flash('Bitte zuerst den Server-Key bestätigen.', 'info')
+        return redirect(url_for('auth.register'))
+    if not current_app.config.get('GITHUB_CLIENT_ID') or not current_app.config.get('GITHUB_CLIENT_SECRET'):
+        flash('GitHub-Anmeldung ist derzeit nicht konfiguriert.', 'error')
+        return redirect(url_for('auth.login'))
+
+    redirect_uri = current_app.config['GITHUB_REDIRECT_URI']
+    current_app.logger.info('GitHub OAuth redirect_uri=%s', redirect_uri)
+    return oauth.github.authorize_redirect(redirect_uri)
+
+
+@bp.route('/github/callback')
+def github_callback():
+    """Finish GitHub OAuth, create/link the local user and start the session."""
+    if request.args.get('error'):
+        flash('GitHub-Anmeldung abgebrochen. Bitte versuche es erneut.', 'error')
+        return redirect(url_for('auth.login'))
+
+    try:
+        token = oauth.github.authorize_access_token()
+        if not token or not token.get('access_token'):
+            raise ValueError('GitHub did not return an access token')
+
+        github_user = _github_response_json(oauth.github.get('user'))
+        github_emails = _github_response_json(oauth.github.get('user/emails'))
+        if not isinstance(github_user, dict) or not isinstance(github_emails, list):
+            raise ValueError('GitHub returned an invalid profile response')
+        github_id = str(github_user.get('id') or '')
+        email = (_extract_github_email(github_emails) or '').strip().lower()
+        if not github_id or not email or len(email) > MAX_EMAIL_LEN or not EMAIL_RE.fullmatch(email):
+            raise ValueError('GitHub profile has no usable primary email')
+
+        # The server-key gate must still be valid when GitHub redirects back;
+        # an admin may have paused or exhausted the key during OAuth.
+        if _server_keys_required() and _verified_registration_key() is None:
+            # Keep the continuation marker so re-verifying a replacement key
+            # starts OAuth again without exposing GitHub on the gate page.
+            session['oauth_after_key'] = True
+            flash('Der Server-Key ist nicht mehr gültig. Bitte bestätige ihn erneut.', 'error')
+            return redirect(url_for('auth.register'))
+    except (MismatchingStateError, OAuthError, RequestException, SQLAlchemyError, ValueError, TypeError):
+        flash('GitHub-Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.', 'error')
+        return redirect(url_for('auth.login'))
+
+    try:
+        user = User.query.filter_by(github_id=github_id).first()
+        existing_email_user = User.query.filter_by(email=email).first()
+    except SQLAlchemyError:
+        db.session.rollback()
+        flash('GitHub-Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.', 'error')
+        return redirect(url_for('auth.login'))
+
+    if existing_email_user and (user is None or existing_email_user.id != user.id):
+        # Do not silently take over or overwrite another local account solely
+        # because the same email appears in GitHub. Explicit linking can be
+        # added later after the user has authenticated locally.
+        flash('Für diese E-Mail existiert bereits ein lokales Konto. Bitte zuerst lokal anmelden.', 'error')
+        return redirect(url_for('auth.login'))
+
+    if user is None:
+        # GitHub never creates an account silently. Keep only the verified
+        # profile data in the signed session so the user can explicitly finish
+        # the normal password-based signup; the registration page has no OAuth
+        # button and the password remains mandatory.
+        session[PENDING_GITHUB_SESSION] = {
+            'github_id': github_id,
+            'email': email,
+            'login': (github_user.get('login') or '')[:32],
+            'avatar_url': (github_user.get('avatar_url') or '')[:500],
+        }
+        flash('Für diesen GitHub-Account existiert noch kein Konto. Bitte erstelle zuerst ein Konto mit Passwort.', 'info')
+        return redirect(url_for('auth.register'))
+    else:
+        user.github_id = github_id
+        if not user.email:
+            user.email = email
+        user.avatar_url = (github_user.get('avatar_url') or '')[:500] or user.avatar_url
+
+    if user.banned:
+        db.session.rollback()
+        flash('Dieser Account wurde gesperrt.', 'error')
+        return redirect(url_for('auth.login'))
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        flash('GitHub-Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.', 'error')
+        return redirect(url_for('auth.login'))
+
+    try:
+        _track_login(user)
+    except Exception:
+        db.session.rollback()
+        flash('GitHub-Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.', 'error')
+        return redirect(url_for('auth.login'))
+
+    session.clear()
+    login_user(user)
+    session['user_id'] = user.id
+    rotate_csrf()
+    return redirect(url_for('hub.dashboard'))
+
+
 @bp.route('/login', methods=['GET', 'POST'])
+@csrf_protect
 def login():
     # redirect authenticated users to hub
     if current_user.is_authenticated:
@@ -222,6 +389,7 @@ def login():
 
 
 @bp.route('/login-split', methods=['GET', 'POST'])
+@csrf_protect
 def login_split():
     if current_user.is_authenticated:
         return redirect(url_for('hub.hub'))
@@ -233,106 +401,145 @@ def login_split():
 
 
 @bp.route('/register', methods=['GET', 'POST'])
+@csrf_protect
 def register():
-    # Rate limit BEFORE the authenticated-redirect so bulk registrations
-    if request.method == 'POST' and _rate_limited(_client_key('register')):
-        flash('Zu viele Registrierungsversuche. Bitte warte kurz.', 'error')
-        return render_template('auth/register.html', key_verified=bool(_get_verified_registration_key())), 429
+    """Show the server-key gate, then create a local account."""
+    action = request.form.get('action', '') if request.method == 'POST' else ''
+    rate_key = 'register-key' if action == 'verify_key' else 'register'
+    if request.method == 'POST' and _rate_limited(_client_key(rate_key)):
+        flash('Zu viele Versuche. Bitte warte kurz und versuche es erneut.', 'error')
+        return render_template('auth/register.html',
+                               key_required=_server_keys_required(),
+                               key_verified=bool(_verified_registration_key()),
+                               ), 429
 
-    # redirect authenticated users to hub
     if current_user.is_authenticated:
         return redirect(url_for('hub.hub'))
-
-    # Share-Link: ?key=xxx → Auto-Validierung
-    share_key = request.args.get('key', '').strip()
-    if share_key and request.method == 'GET':
-        key = ServerKey.query.filter_by(key_value=share_key).first()
-        if key and key.active and key.uses_left > 0:
-            session[REGISTRATION_KEY_SESSION] = key.id
-            flash(f'Server-Key "{key.name}" wurde bestätigt. Du kannst dich jetzt registrieren.', 'success')
-            return redirect(url_for('auth.register'))
-        else:
-            flash('Dieser Share-Link ist ungültig oder der Key ist aufgebraucht.', 'error')
-            return redirect(url_for('auth.register'))
-
-    verified_key = _get_verified_registration_key()
 
     if request.method == 'POST' and request.form.get('action') == 'clear_key':
         _clear_registration_key()
         return redirect(url_for('auth.register'))
 
-    if request.method == 'POST':
-        if verified_key is None:
-            submitted_key = (request.form.get('server_key') or '').strip()
-            if not submitted_key:
-                flash('Bitte einen Server-Key eingeben.', 'error')
-                return render_template('auth/register.html', key_verified=False)
-
-            key = ServerKey.query.filter_by(key_value=submitted_key).first()
-            if key is None or not key.active or key.uses_left <= 0:
-                flash('Server-Key ist ungültig oder bereits aufgebraucht.', 'error')
-                return render_template('auth/register.html', key_verified=False)
-
-            session[REGISTRATION_KEY_SESSION] = key.id
-            flash(f'Server-Key "{key.name}" wurde bestätigt. Du kannst dich jetzt registrieren.', 'success')
+    if request.method == 'POST' and request.form.get('action') == 'verify_key':
+        submitted_key = (request.form.get('server_key') or '').strip()
+        key = ServerKey.query.filter_by(key_value=submitted_key).first() if submitted_key else None
+        if not _server_keys_required():
             return redirect(url_for('auth.register'))
+        if key is None or not key.is_currently_active or key.uses_left <= 0:
+            flash('Server-Key ist ungültig, deaktiviert oder bereits aufgebraucht.', 'error')
+            return render_template('auth/register.html', key_required=True, key_verified=False,
+                                   )
+        session[REGISTRATION_KEY_SESSION] = key.id
+        if session.pop('oauth_after_key', False):
+            return redirect(url_for('auth.github_login'))
+        flash('Server-Key bestätigt. Du kannst jetzt dein Konto erstellen.', 'success')
+        return redirect(url_for('auth.register'))
+
+    key_required = _server_keys_required()
+    verified_key = _verified_registration_key() if key_required else True
+    pending_github = _pending_github()
+    if request.method == 'POST':
+        if key_required and verified_key is None:
+            flash('Bitte zuerst einen gültigen Server-Key bestätigen.', 'error')
+            return render_template('auth/register.html', key_required=True, key_verified=False,
+                                   )
 
         username = (request.form.get('username') or '').strip()
-        email = (request.form.get('email') or '').strip() or None
+        email = (pending_github or {}).get('email') or (request.form.get('email') or '').strip().lower() or None
         password = request.form.get('password') or ''
-
         if not username or not password:
             flash('Benutzername und Passwort sind erforderlich', 'error')
-            return render_template('auth/register.html', key_verified=True)
-
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
         if not USERNAME_RE.match(username):
             flash('Benutzername: 3–32 Zeichen, nur Buchstaben, Zahlen, Punkt, Minus und Unterstrich', 'error')
-            return render_template('auth/register.html', key_verified=True)
-
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
         if len(password) > MAX_PASSWORD_LEN:
             flash('Passwort darf höchstens 128 Zeichen haben', 'error')
-            return render_template('auth/register.html', key_verified=True)
-
-        if email:
-            if len(email) > MAX_EMAIL_LEN or not EMAIL_RE.match(email):
-                flash('Bitte eine gültige E-Mail-Adresse angeben', 'error')
-                return render_template('auth/register.html', key_verified=True)
-
-        # Password policy check
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
+        if email and (len(email) > MAX_EMAIL_LEN or not EMAIL_RE.fullmatch(email)):
+            flash('Bitte eine gültige E-Mail-Adresse angeben', 'error')
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
         valid, reasons = validate_password(password, username)
         if not valid:
             flash('Passwort entspricht nicht der Sicherheitsrichtlinie: ' + '; '.join(reasons), 'error')
-            return render_template('auth/register.html', key_verified=True)
-
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
         if User.query.filter_by(username=username).first():
             flash('Benutzername bereits vergeben', 'error')
-            return render_template('auth/register.html', key_verified=True)
-
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
         if email and User.query.filter_by(email=email).first():
             flash('E-Mail bereits registriert', 'error')
-            return render_template('auth/register.html', key_verified=True)
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
 
         user = User(username=username, email=email, role=1)
+        if pending_github:
+            user.github_id = pending_github['github_id']
+            user.avatar_url = pending_github.get('avatar_url') or None
         user.set_password(password)
-        verified_key = _get_verified_registration_key()
-        if verified_key is None:
-            flash('Bitte zuerst einen gültigen Server-Key bestätigen.', 'error')
-            return render_template('auth/register.html', key_verified=False)
-
-        verified_key.uses_left = max(verified_key.uses_left - 1, 0)
-        _clear_registration_key()
         db.session.add(user)
-        db.session.commit()
+        if key_required:
+            # Re-check immediately before consuming so deactivated/exhausted
+            # keys cannot be used after the gate page was opened.
+            if verified_key is None:
+                db.session.rollback()
+                _clear_registration_key()
+                flash('Der Server-Key ist nicht mehr gültig.', 'error')
+                return render_template('auth/register.html', key_required=True, key_verified=False,
+                                       )
+            result = db.session.execute(
+                update(ServerKey)
+                .where(
+                    ServerKey.id == verified_key.id,
+                    ServerKey.active.is_(True),
+                    or_(
+                        ServerKey.deactivated_until.is_(None),
+                        ServerKey.deactivated_until <= datetime.utcnow(),
+                    ),
+                    ServerKey.uses_left > 0,
+                )
+                .values(uses_left=ServerKey.uses_left - 1)
+            )
+            if result.rowcount != 1:
+                db.session.rollback()
+                _clear_registration_key()
+                flash('Der Server-Key ist nicht mehr gültig.', 'error')
+                return render_template('auth/register.html', key_required=True, key_verified=False,
+                                       )
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Konto konnte nicht erstellt werden. Bitte versuche es erneut.', 'error')
+            return render_template('auth/register.html', key_required=key_required,
+                                   key_verified=bool(verified_key), pending_github=pending_github)
+        _clear_registration_key()
+        _clear_pending_github()
+        session.clear()
         login_user(user)
+        session['user_id'] = user.id
+        rotate_csrf()
         return redirect(url_for('hub.hub'))
-    return render_template('auth/register.html', key_verified=bool(verified_key))
+
+    return render_template('auth/register.html', key_required=key_required,
+                           key_verified=bool(verified_key), pending_github=pending_github)
 
 
-@bp.route('/logout')
-@login_required
+@bp.route('/logout', methods=['GET', 'POST'])
+@csrf_protect
 def logout():
-    _clear_registration_key()
+    # Keep legacy GET links usable without making logout CSRF-able. Actual
+    # session destruction happens only after the CSRF-protected POST.
+    if request.method == 'GET':
+        return render_template('auth/logout_confirm.html')
     logout_user()
+    session.clear()
+    # The root route is login-protected, so the public start page is the login screen.
     return redirect(url_for('auth.login'))
 
 

@@ -387,6 +387,22 @@ a:hover {
     background: #20201f;
 }
 
+/* GitHub OAuth */
+.btn-github {
+    background: var(--ink);
+    color: var(--bg);
+    border: 1px solid var(--ink);
+}
+
+.btn-github:hover {
+    background: var(--soft-ink);
+    color: var(--bg);
+}
+
+.btn-github:active {
+    background: var(--text-body);
+}
+
 /* Tertiary / Ghost */
 .btn-ghost {
     background: transparent;
@@ -872,102 +888,6 @@ input:-webkit-autofill:focus {
     .sidebar-overlay { display: none !important; }
 }
 
-/* ============================================================
-   Sidebar Profile Section (bottom of sidebar)
-   ============================================================ */
-.sidebar-profile {
-    border-top: 1px solid var(--border-soft);
-    padding: 6px;
-    margin-top: auto;
-}
-
-.fab-avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: none;
-    border: none;
-    color: var(--text-body);
-    font-family: var(--font-sans);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.175s var(--ease-out);
-    -webkit-tap-highlight-color: transparent;
-}
-.sidebar-profile-btn:hover {
-    background: var(--surface-pearl);
-}
-[data-theme="dark"] .sidebar-profile-btn:hover {
-    background: #292928;
-}
-
-.fab-dropdown {
-    position: absolute;
-    bottom: calc(100% + 12px);
-    right: 0;
-    min-width: 200px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-soft);
-    border-radius: 12px;
-    padding: 6px;
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-[data-theme="dark"] .fab-dropdown {
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.25);
-}
-
-.fab-dropdown-header {
-    padding: 8px 12px 4px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.fab-dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-body);
-    text-decoration: none;
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    transition: background-color 0.175s var(--ease-out);
-    -webkit-tap-highlight-color: transparent;
-}
-.fab-dropdown-item:hover {
-    background: var(--surface-pearl);
-    color: var(--ink);
-}
-[data-theme="dark"] .fab-dropdown-item:hover {
-    background: #292928;
-}
-
-.fab-dropdown-item--danger {
-    color: var(--error);
-}
-.fab-dropdown-item--danger:hover {
-    background: var(--error-soft);
-}
 .site-header {
     position: relative;
     z-index: 1;
@@ -1805,9 +1725,10 @@ input:-webkit-autofill:focus {
         padding: 24px;
     }
 
-    /* Mobile: Anmelden/Registrieren-Buttons im Header ausblenden */
-    .header-nav .btn {
-        display: none;
+    /* Public auth actions stay visible on small screens. */
+    .header-nav {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .header-inner {
@@ -2188,37 +2109,6 @@ input[type="number"] {
     border-color: #529cca;
 }
 
-/* Share-Link Badge */
-.share-link-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
-    border-radius: 6px;
-    background: var(--surface-mist);
-    border: 1px solid var(--border-soft);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    transition: background-color 0.15s var(--ease-out);
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.share-link-badge:hover {
-    background: var(--surface-pearl);
-}
-[data-theme="dark"] .share-link-badge {
-    background: #292928;
-    border-color: rgba(255,255,255,0.08);
-}
-[data-theme="dark"] .share-link-badge:hover {
-    background: #30302f;
-}
-
 /* ============================================================
    Sidebar Profile (bottom of sidebar) — Dropdown opens upward
    ============================================================ */
@@ -2457,17 +2347,14 @@ img.sidebar-profile-avatar {
 [data-oled] .sidebar-link:hover,
 [data-oled] .sidebar-profile-btn:hover,
 [data-oled] .sidebar-profile-item:hover,
-[data-oled] .nav-link:hover,
-[data-oled] .fab-dropdown-item:hover {
+[data-oled] .nav-link:hover {
     background: #1a1a1a;
 }
-[data-oled] .copy-btn,
-[data-oled] .share-link-badge {
+[data-oled] .copy-btn {
     background: #0D0D0D;
     border-color: rgba(255, 255, 255, 0.08);
 }
-[data-oled] .copy-btn:hover,
-[data-oled] .share-link-badge:hover {
+[data-oled] .copy-btn:hover {
     background: #1a1a1a;
 }
 [data-oled] .sidebar-theme-btn:hover,

@@ -28,8 +28,8 @@
         <!-- Meta-Zeile: Autor, Datum, Lesezeit, Copy-Link -->
         <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                {% if item.author and item.author.avatar %}
-                <img class="sidebar-profile-avatar" style="width: 28px; height: 28px;" src="{{ item.author.avatar_url }}" alt="{{ item.author.username }}">
+                {% if item.author and item.author.profile_image_url %}
+                <img class="sidebar-profile-avatar" style="width: 28px; height: 28px;" src="{{ item.author.profile_image_url }}" alt="{{ item.author.username }}">
                 {% else %}
                 <span class="sidebar-profile-avatar" style="width: 28px; height: 28px; font-size: 0.8125rem;">{{ item.author.username[0]|upper if item.author else '?' }}</span>
                 {% endif %}

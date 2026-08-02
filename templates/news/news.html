@@ -29,6 +29,7 @@
     <div class="card" style="padding: 24px; margin-bottom: 28px;">
         <h3 style="margin: 0 0 16px 0;">Neuen Beitrag veröffentlichen</h3>
         <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="action" value="create">
             <div class="form-group">
                 <label class="form-label" for="create_title">Titel</label>
@@ -72,8 +73,8 @@
                 {{ item.content }}
             </p>
             <div style="display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-soft);">
-                {% if item.author and item.author.avatar %}
-                <img class="sidebar-profile-avatar" style="width: 22px; height: 22px;" src="{{ item.author.avatar_url }}" alt="{{ item.author.username }}">
+                {% if item.author and item.author.profile_image_url %}
+                <img class="sidebar-profile-avatar" style="width: 22px; height: 22px;" src="{{ item.author.profile_image_url }}" alt="{{ item.author.username }}">
                 {% else %}
                 <span class="sidebar-profile-avatar" style="width: 22px; height: 22px; font-size: 0.6875rem;">{{ item.author.username[0]|upper if item.author else '?' }}</span>
                 {% endif %}
@@ -92,6 +93,7 @@
                     <span x-show="editOpen" x-cloak>Schließen</span>
                 </button>
                 <form method="post" style="margin: 0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="toggle">
                     <input type="hidden" name="news_id" value="{{ item.id }}">
                     <button type="submit" class="btn btn-ghost btn-sm">{{ 'Lösen' if item.pinned else 'Anheften' }}</button>
@@ -105,6 +107,7 @@
                 <!-- Edit Panel -->
                 <div x-show="editOpen" x-cloak style="flex: 1 1 100%; border-top: 1px solid var(--border-soft); margin-top: 12px; padding-top: 16px;">
                     <form method="post" style="display: flex; flex-direction: column; gap: 14px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="update">
                         <input type="hidden" name="news_id" value="{{ item.id }}">
                         <div class="form-group">

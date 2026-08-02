@@ -25,7 +25,7 @@ authentication, admin user/key management, settings and a News/Blog module.
 
 ```
 run.py                  # App factory, module loader, error handlers, config
-models.py               # SQLAlchemy models (User, ServerKey, LoginSession, News)
+models.py               # SQLAlchemy models (User, LoginSession, News)
 extensions.py           # db, login_manager instances
 modules.json            # Module registry (enabled/disabled)
 modules/<name>/app.py   # Each module: `bp = Blueprint(...)` + `init_module(app)`

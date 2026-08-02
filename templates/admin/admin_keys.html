@@ -4,159 +4,88 @@
 
 {% block content %}
 <section class="max-w-7xl mx-auto px-6 py-12">
-    <!-- Header -->
     <div class="mb-10">
         <h1 class="display" style="font-size: clamp(1.75rem, 3vw, 2.25rem); margin-bottom: 4px;">Server Keys</h1>
-        <p class="text-secondary">{{ server_keys|length }} Key{% if server_keys|length != 1 %}s{% endif %} für Registrierungen</p>
+        <p class="text-secondary">Registrierungszugang und einzelne Keys verwalten</p>
     </div>
 
-    <!-- Create Key Card -->
     <div class="card" style="padding: 24px; margin-bottom: 24px;">
-        <h3 style="margin: 0 0 16px 0;">Neuen Key anlegen</h3>
-        <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+            <div>
+                <h3 style="margin:0 0 4px;">Server-Key-Pflicht</h3>
+                <p class="body-small text-secondary" style="margin:0;">
+                    {% if server_keys_required %}Neue Konten benötigen einen aktiven Server-Key.{% else %}Registrierungen sind derzeit auch ohne Server-Key möglich.{% endif %}
+                </p>
+            </div>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="toggle_requirement">
+                <label class="toggle-switch">
+                    <input name="server_keys_required" type="checkbox" {% if server_keys_required %}checked{% endif %} onchange="this.form.submit()">
+                    <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                    <span class="body-small">Keys erforderlich</span>
+                </label>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 24px; margin-bottom: 24px;">
+        <h3 style="margin:0 0 16px;">Neuen Key anlegen</h3>
+        <form method="post" style="display:flex; flex-direction:column; gap:16px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="action" value="create">
-            <div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: end;">
+            <div style="display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); align-items:end;">
                 <div class="form-group">
                     <label class="form-label" for="create_name">Name</label>
-                    <input id="create_name" name="name" type="text" class="input" placeholder="z. B. Sommeraktion 2026">
+                    <input id="create_name" name="name" type="text" class="input" maxlength="120" placeholder="z. B. Team Einladung">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="create_key_value">Key-Wert</label>
-                    <input id="create_key_value" name="key_value" type="text" class="input" placeholder="Automatisch generiert" autocomplete="off">
+                    <label class="form-label" for="create_key_value">Key-Wert <span class="form-label-optional">(optional)</span></label>
+                    <input id="create_key_value" name="key_value" type="text" class="input" maxlength="255" placeholder="Automatisch generiert" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="create_max_uses">Max. Nutzungen</label>
-                    <input id="create_max_uses" name="max_uses" type="number" min="1" value="1" class="input" style="-moz-appearance:textfield;">
+                    <input id="create_max_uses" name="max_uses" type="number" min="1" value="1" class="input">
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 4px;">
-                    <label class="toggle-switch">
-                        <input id="create_active" name="active" type="checkbox" checked>
-                        <span class="toggle-switch-track">
-                            <span class="toggle-switch-thumb"></span>
-                        </span>
-                        <span class="body-small">Aktiv</span>
-                    </label>
-                </div>
+                <span class="body-small text-secondary" style="padding-bottom:8px;">Neue Keys sind automatisch aktiv.</span>
                 <button type="submit" class="btn btn-accent">Key anlegen</button>
             </div>
         </form>
     </div>
 
-    <!-- Key List -->
-    <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
         {% for key in server_keys %}
-        <div class="card" style="padding: 0; overflow: hidden;{% if not key.active %} border-color: var(--error-border); opacity: 0.75;{% endif %}"
-             x-data="{ editOpen: false, copied: false, shareCopied: false }">
-
-            <!-- Key Card Header -->
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px; cursor: pointer; transition: background-color 0.15s var(--ease-out);"
-                 @click="editOpen = !editOpen"
-                 @mouseenter="$el.style.background='var(--surface-mist)'"
-                 @mouseleave="$el.style.background=''">
-                <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
-                        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-tertiary);">#{{ key.id }}</span>
-                        <span style="font-weight: 600; color: var(--ink); font-size: 1.0625rem;">{{ key.name }}</span>
-                        {% if key.active %}
-                            <span class="pill pill-teal" style="font-size: 0.6875rem;">Aktiv</span>
-                        {% else %}
-                            <span class="pill pill-banned" style="font-size: 0.6875rem;">Deaktiviert</span>
-                        {% endif %}
+        <div class="card" style="padding:20px 24px;{% if not key.is_currently_active %} border-color:var(--error-border); opacity:.78;{% endif %}">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+                <div style="min-width:240px; flex:1;">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                        <span style="font-weight:600; font-size:1.0625rem;">{{ key.name }}</span>
+                        {% if key.is_currently_active %}<span class="pill pill-teal">Aktiv</span>{% else %}<span class="pill pill-banned">Deaktiviert{% if key.deactivated_until %} · bis {{ key.deactivated_until.strftime('%H:%M Uhr') }}{% endif %}</span>{% endif %}
                     </div>
-
-                    <!-- Key Value + Copy + Share Row -->
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-                        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; background: var(--surface-mist); border: 1px solid var(--border-soft); font-family: var(--font-mono); font-size: 0.8125rem; color: var(--text-body); word-break: break-all; flex: 1; min-width: 0;">
-                            <span style="flex: 1;">{{ key.key_value }}</span>
-                        </div>
-                        <button class="copy-btn" :class="{ 'copied': copied }"
-                                @click.stop="navigator.clipboard.writeText({{ key.key_value|tojson }}); copied = true; setTimeout(() => copied = false, 2000)">
-                            <svg x-show="!copied" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            <svg x-show="copied" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                            <span x-text="copied ? 'Kopiert!' : 'Key kopieren'"></span>
-                        </button>
-                    </div>
-
-                    <!-- Share Link -->
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <span class="caption" style="color: var(--text-tertiary); flex-shrink: 0;">Share-Link:</span>
-                        <span class="share-link-badge" @click.stop="navigator.clipboard.writeText({{ url_for('auth.register', key=key.key_value, _external=True)|tojson }}); shareCopied = true; setTimeout(() => shareCopied = false, 2000)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                            <span style="overflow: hidden; text-overflow: ellipsis;">{{ url_for('auth.register', key=key.key_value, _external=True) }}</span>
-                            <svg x-show="!shareCopied" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            <svg x-show="shareCopied" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                        </span>
-                    </div>
-
-                    <!-- Usage Bar -->
-                    <div style="display: flex; align-items: center; gap: 10px; max-width: 360px;">
-                        <span class="caption" style="color: var(--text-secondary); min-width: 70px;">{{ key.uses_left }} / {{ key.max_uses }}</span>
-                        <div style="flex: 1; height: 6px; border-radius: 9999px; background: var(--surface-cloud); overflow: hidden;">
-                            {% set pct = ((key.max_uses - key.uses_left) / key.max_uses * 100)|int if key.max_uses > 0 else 0 %}
-                            <div style="height: 100%; width: {{ pct }}%; border-radius: 9999px; background: {% if pct >= 100 %}var(--error){% elif pct >= 75 %}var(--warning){% else %}var(--teal){% endif %}; transition: width 0.5s var(--ease-out);"></div>
-                        </div>
-                        <span class="caption" style="color: var(--text-tertiary); min-width: 50px; text-align: right;">{{ pct }}% genutzt</span>
-                    </div>
+                    <code style="display:block; padding:10px 12px; margin-bottom:10px; border:1px solid var(--border-soft); border-radius:8px; background:var(--surface-mist); word-break:break-all;">{{ key.key_value }}</code>
+                    <p class="body-small text-secondary" style="margin:0;">{{ key.uses_left }} von {{ key.max_uses }} Nutzungen verfügbar</p>
                 </div>
-
-                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <form method="post" onsubmit='return confirm({{ (key.name ~ " wirklich löschen?")|tojson }})' @click.stop="">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="toggle">
                         <input type="hidden" name="key_id" value="{{ key.id }}">
+                        <button type="submit" class="btn btn-secondary btn-sm">{% if key.is_currently_active %}Für 2 Stunden deaktivieren{% else %}Sofort aktivieren{% endif %}</button>
+                    </form>
+                    <form method="post" onsubmit="return confirm('Diesen Server-Key wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="key_id" value="{{ key.id }}">
                         <button type="submit" class="btn btn-danger btn-sm">Löschen</button>
                     </form>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                         style="color: var(--text-tertiary); transition: transform 0.2s var(--ease-out);"
-                         :style="editOpen ? 'transform: rotate(180deg)' : ''">
-                        <polyline points="6 9 12 15 18 9"/>
-                    </svg>
                 </div>
             </div>
-
-            <!-- Edit Panel -->
-            <div x-show="editOpen" x-cloak style="border-top: 1px solid var(--border-soft); padding: 24px;">
-                <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
-                    <input type="hidden" name="key_id" value="{{ key.id }}">
-                    <input type="hidden" name="action" value="update">
-                    <div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: end;">
-                        <div class="form-group">
-                            <label class="form-label" for="name_{{ key.id }}">Name</label>
-                            <input id="name_{{ key.id }}" name="name" type="text" class="input" value="{{ key.name }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="key_value_{{ key.id }}">Key-Wert</label>
-                            <input id="key_value_{{ key.id }}" name="key_value" type="text" class="input" value="{{ key.key_value }}" autocomplete="off">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="max_uses_{{ key.id }}">Max. Nutzungen</label>
-                            <input id="max_uses_{{ key.id }}" name="max_uses" type="number" min="1" class="input" value="{{ key.max_uses }}" style="-moz-appearance:textfield;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="uses_left_{{ key.id }}">Verbleibend</label>
-                            <input id="uses_left_{{ key.id }}" name="uses_left" type="number" min="0" class="input" value="{{ key.uses_left }}" style="-moz-appearance:textfield;">
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 4px;">
-                            <label class="toggle-switch">
-                                <input id="active_{{ key.id }}" name="active" type="checkbox" {% if key.active %}checked{% endif %}>
-                                <span class="toggle-switch-track">
-                                    <span class="toggle-switch-thumb"></span>
-                                </span>
-                                <span class="body-small">Aktiv</span>
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Speichern</button>
-                    </div>
-                </form>
-            </div>
+        </div>
+        {% else %}
+        <div class="card" style="padding:48px 24px; text-align:center;">
+            <p class="text-tertiary" style="margin:0;">Noch keine Server-Keys angelegt.</p>
         </div>
         {% endfor %}
-
-        {% if not server_keys %}
-        <div class="card" style="padding: 48px 24px; text-align: center;">
-            <p style="color: var(--text-tertiary); margin-bottom: 4px;">Noch keine Server Keys angelegt.</p>
-            <p class="body-small" style="color: var(--text-tertiary);">Erstelle deinen ersten Key über das Formular oben.</p>
-        </div>
-        {% endif %}
     </div>
 </section>
 {% endblock %}

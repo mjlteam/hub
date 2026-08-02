@@ -20,29 +20,7 @@ sys.path.insert(0, str(project_root))
 
 from run import create_app
 from extensions import db
-from sqlalchemy import inspect, text
 
-
-def ensure_user_columns():
-    inspector = inspect(db.engine)
-    if 'users' not in inspector.get_table_names():
-        return
-
-    columns = {column['name'] for column in inspector.get_columns('users')}
-    if 'role' not in columns:
-        print('Adding missing users.role column...')
-        db.session.execute(text('ALTER TABLE users ADD COLUMN role INTEGER NOT NULL DEFAULT 1'))
-        db.session.commit()
-
-    if 'banned' not in columns:
-        print('Adding missing users.banned column...')
-        db.session.execute(text('ALTER TABLE users ADD COLUMN banned BOOLEAN NOT NULL DEFAULT 0'))
-        db.session.commit()
-
-    if 'avatar' not in columns:
-        print('Adding missing users.avatar column...')
-        db.session.execute(text('ALTER TABLE users ADD COLUMN avatar VARCHAR(255)'))
-        db.session.commit()
 
 
 
@@ -79,8 +57,6 @@ def main():
 
         print('Creating tables...')
         db.create_all()
-        ensure_user_columns()
-
         if args.seed:
             seed_admin()
 

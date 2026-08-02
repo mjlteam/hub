@@ -73,6 +73,7 @@
                 <!-- Actions: Role + Password + Ban -->
                 <div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-soft);">
                     <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="user_id" value="{{ user.id }}">
                         <input type="hidden" name="action" value="role">
                         <select name="role" class="input" style="min-width: 130px; padding: 6px 10px; font-size: 0.8125rem; height: 34px;">
@@ -88,6 +89,7 @@
                             <span x-show="pwOpen" x-cloak>Schließen</span>
                         </button>
                         <form x-show="pwOpen" x-cloak method="post" style="display: flex; align-items: center; gap: 8px;" @click.stop="">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="user_id" value="{{ user.id }}">
                             <input type="hidden" name="action" value="password">
                             <input name="new_password" type="password" class="input" placeholder="Neues Passwort" style="padding: 6px 10px; font-size: 0.8125rem; height: 34px; min-width: 160px;" minlength="8" required>
@@ -97,6 +99,7 @@
                     <!-- Ban / Unban -->
                     {% if current_user.id != user.id %}
                     <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="user_id" value="{{ user.id }}">
                         {% if user.banned %}
                             <input type="hidden" name="action" value="unban">

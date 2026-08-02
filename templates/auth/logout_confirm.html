@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Abmelden — MJL-Team{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="card card-padded" style="text-align:center;">
+            <div class="auth-header" style="margin-bottom:20px;">
+                <h2>Abmelden?</h2>
+                <p>Bitte bestätige, dass du dich von diesem Gerät abmelden möchtest.</p>
+            </div>
+            <form method="post" action="{{ url_for('auth.logout') }}" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger">Ja, abmelden</button>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Abbrechen</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

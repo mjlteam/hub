@@ -15,6 +15,8 @@ class User(UserMixin, db.Model):
     role = db.Column(db.Integer, nullable=False, default=1, server_default=text('1'))
     banned = db.Column(db.Boolean, nullable=False, default=False, server_default=text('0'))
     avatar = db.Column(db.String(255))
+    github_id = db.Column(db.String(100), unique=True, index=True)
+    avatar_url = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -29,11 +31,11 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     @property
-    def avatar_url(self) -> str | None:
-        """Static URL of the uploaded avatar, or None if not set."""
-        if not self.avatar:
-            return None
-        return url_for('static', filename=f'uploads/avatars/{self.avatar}')
+    def profile_image_url(self) -> str | None:
+        """Return the GitHub avatar or the locally uploaded avatar URL."""
+        if self.avatar:
+            return url_for('static', filename=f'uploads/avatars/{self.avatar}')
+        return self.avatar_url
 
     def __repr__(self) -> str:
         return f"<User {self.id} {self.username}>"
@@ -47,11 +49,28 @@ class ServerKey(db.Model):
     max_uses = db.Column(db.Integer, nullable=False, default=1, server_default=text('1'))
     uses_left = db.Column(db.Integer, nullable=False, default=1, server_default=text('1'))
     active = db.Column(db.Boolean, nullable=False, default=True, server_default=text('1'))
+    # Temporary admin pause; the key becomes usable automatically afterwards.
+    deactivated_until = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    @property
+    def is_currently_active(self) -> bool:
+        """Return whether this key can be used right now."""
+        return bool(
+            self.active
+            and (self.deactivated_until is None or self.deactivated_until <= datetime.utcnow())
+        )
+
     def __repr__(self) -> str:
         return f"<ServerKey {self.id} {self.name} uses_left={self.uses_left}>"
+
+
+class RegistrationSettings(db.Model):
+    __tablename__ = 'registration_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    server_keys_required = db.Column(db.Boolean, nullable=False, default=True, server_default=text('1'))
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class LoginSession(db.Model):

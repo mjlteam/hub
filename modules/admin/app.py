@@ -1,12 +1,14 @@
+from datetime import datetime, timedelta
 from functools import wraps
 import secrets
-
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_required
+from flask_login import current_user
+from modules.auth.decorators import login_required
+from modules.auth.csrf import csrf_protect
 from sqlalchemy import func
 
 from extensions import db
-from models import User, LoginSession, ServerKey
+from models import User, LoginSession, ServerKey, RegistrationSettings
 
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -21,10 +23,6 @@ ROLE_OPTIONS = {
 
 def _role_label(role: int | None) -> str:
 	return ROLE_OPTIONS.get(role or 1, f'Rolle {role}')
-
-
-def _generate_server_key() -> str:
-	return secrets.token_urlsafe(24)
 
 
 def admin_required(view_func):
@@ -45,7 +43,8 @@ def admin_dashboard():
 	total_sessions = LoginSession.query.count()
 	recent_sessions = LoginSession.query.order_by(LoginSession.logged_in_at.desc()).limit(20).all()
 	admins = User.query.filter_by(role=10).count()
-	server_keys = ServerKey.query.count()
+	registration_settings = db.session.get(RegistrationSettings, 1)
+	server_keys_required = bool(registration_settings.server_keys_required) if registration_settings else True
 
 	# Per-browser stats
 	browser_stats = db.session.query(
@@ -62,13 +61,14 @@ def admin_dashboard():
 		total_users=total_users,
 		total_sessions=total_sessions,
 		admins=admins,
-		server_keys=server_keys,
+		server_keys_required=server_keys_required,
 		recent_sessions=recent_sessions,
 		browser_stats=browser_stats,
 		device_stats=device_stats,
 	)
 
 @bp.route('/users', methods=['GET', 'POST'])
+@csrf_protect
 @admin_required
 def admin_users():
 	if request.method == 'POST':
@@ -164,85 +164,111 @@ def admin_users():
 	)
 
 
+def _generate_server_key() -> str:
+    return secrets.token_urlsafe(24)
+
+
 @bp.route('/keys', methods=['GET', 'POST'])
+@csrf_protect
 @admin_required
 def admin_keys():
-	if request.method == 'POST':
-		action = request.form.get('action', 'create')
-		key_id = request.form.get('key_id', type=int)
-		server_key = db.session.get(ServerKey, key_id) if key_id else None
+    """Manage registration keys and the global key requirement."""
+    settings = db.session.get(RegistrationSettings, 1)
+    if settings is None:
+        settings = RegistrationSettings(id=1, server_keys_required=True)
+        db.session.add(settings)
+        db.session.commit()
 
-		if action == 'delete':
-			if server_key is None:
-				abort(404)
-			db.session.delete(server_key)
-			db.session.commit()
-			flash(f'Server-Key "{server_key.name}" wurde gelöscht.', 'success')
-			return redirect(url_for('admin.admin_keys'))
+    if request.method == 'POST':
+        action = request.form.get('action', '')
 
-		if action == 'toggle':
-			if server_key is None:
-				abort(404)
-			server_key.active = not server_key.active
-			db.session.commit()
-			flash(f'Server-Key "{server_key.name}" wurde aktualisiert.', 'success')
-			return redirect(url_for('admin.admin_keys'))
+        if action == 'toggle_requirement':
+            settings.server_keys_required = request.form.get('server_keys_required') == 'on'
+            db.session.commit()
+            flash(
+                'Server-Keys sind jetzt erforderlich.' if settings.server_keys_required
+                else 'Server-Keys sind jetzt optional.',
+                'success',
+            )
+            return redirect(url_for('admin.admin_keys'))
 
-		name = (request.form.get('name') or '').strip()
-		key_value = (request.form.get('key_value') or '').strip()
-		max_uses = request.form.get('max_uses', type=int) or 1
-		uses_left = request.form.get('uses_left', type=int)
-		active = request.form.get('active') == 'on'
+        key_id = request.form.get('key_id', type=int)
+        server_key = db.session.get(ServerKey, key_id) if key_id else None
 
-		if max_uses < 1:
-			flash('Die maximale Nutzung muss mindestens 1 sein.', 'error')
-			return redirect(url_for('admin.admin_keys'))
+        if action == 'delete':
+            if server_key is None:
+                abort(404)
+            name = server_key.name
+            db.session.delete(server_key)
+            db.session.commit()
+            flash(f'Server-Key "{name}" wurde gelöscht.', 'success')
+            return redirect(url_for('admin.admin_keys'))
 
-		if action == 'create':
-			if not key_value:
-				key_value = _generate_server_key()
-			if not name:
-				name = f'Server Key {key_value[:8]}'
-			if ServerKey.query.filter_by(key_value=key_value).first():
-				flash('Dieser Key-Wert existiert bereits.', 'error')
-				return redirect(url_for('admin.admin_keys'))
+        if action == 'toggle':
+            if server_key is None:
+                abort(404)
+            if server_key.is_currently_active:
+                server_key.deactivated_until = datetime.utcnow() + timedelta(hours=2)
+                flash(f'Server-Key "{server_key.name}" wurde für 2 Stunden deaktiviert.', 'success')
+            else:
+                server_key.active = True
+                server_key.deactivated_until = None
+                flash(f'Server-Key "{server_key.name}" wurde wieder aktiviert.', 'success')
+            db.session.commit()
+            return redirect(url_for('admin.admin_keys'))
 
-			server_key = ServerKey(
-				name=name,
-				key_value=key_value,
-				max_uses=max_uses,
-				uses_left=max_uses,
-				active=active,
-			)
-			db.session.add(server_key)
-			db.session.commit()
-			flash(f'Server-Key "{server_key.name}" wurde angelegt.', 'success')
-			return redirect(url_for('admin.admin_keys'))
+        name = (request.form.get('name') or '').strip()[:120]
+        key_value = (request.form.get('key_value') or '').strip()[:255]
+        max_uses = request.form.get('max_uses', type=int) or 1
+        uses_left = request.form.get('uses_left', type=int)
 
-		if server_key is None:
-			abort(404)
+        if max_uses < 1:
+            flash('Die maximale Nutzung muss mindestens 1 sein.', 'error')
+            return redirect(url_for('admin.admin_keys'))
 
-		if key_value and key_value != server_key.key_value:
-			duplicate = ServerKey.query.filter(ServerKey.key_value == key_value, ServerKey.id != server_key.id).first()
-			if duplicate:
-				flash('Dieser Key-Wert existiert bereits.', 'error')
-				return redirect(url_for('admin.admin_keys'))
-			server_key.key_value = key_value
+        if action == 'create':
+            key_value = key_value or _generate_server_key()
+            name = name or f'Server Key {key_value[:8]}'
+            if ServerKey.query.filter_by(key_value=key_value).first():
+                flash('Dieser Key-Wert existiert bereits.', 'error')
+                return redirect(url_for('admin.admin_keys'))
+            db.session.add(ServerKey(
+                name=name,
+                key_value=key_value,
+                max_uses=max_uses,
+                uses_left=max_uses,
+                # Newly generated keys must be usable immediately. Temporary
+                # pauses are controlled only by the two-hour toggle below.
+                active=True,
+                deactivated_until=None,
+            ))
+            db.session.commit()
+            flash(f'Server-Key "{name}" wurde angelegt.', 'success')
+            return redirect(url_for('admin.admin_keys'))
 
-		if name:
-			server_key.name = name
-		server_key.max_uses = max_uses
-		if uses_left is not None:
-			server_key.uses_left = max(0, min(uses_left, max_uses))
-		else:
-			server_key.uses_left = min(server_key.uses_left, max_uses)
-		server_key.active = active
-		db.session.commit()
-		flash(f'Server-Key "{server_key.name}" wurde gespeichert.', 'success')
-		return redirect(url_for('admin.admin_keys'))
+        if server_key is None:
+            abort(404)
+        if key_value and key_value != server_key.key_value:
+            duplicate = ServerKey.query.filter(
+                ServerKey.key_value == key_value, ServerKey.id != server_key.id
+            ).first()
+            if duplicate:
+                flash('Dieser Key-Wert existiert bereits.', 'error')
+                return redirect(url_for('admin.admin_keys'))
+            server_key.key_value = key_value
+        if name:
+            server_key.name = name
+        server_key.max_uses = max_uses
+        server_key.uses_left = max(0, min(uses_left, max_uses)) if uses_left is not None else min(server_key.uses_left, max_uses)
+        # Activation is intentionally controlled only by the two-hour toggle;
+        # this update path must not create an indefinite deactivation.
+        db.session.commit()
+        flash(f'Server-Key "{server_key.name}" wurde gespeichert.', 'success')
+        return redirect(url_for('admin.admin_keys'))
 
-	server_keys = ServerKey.query.order_by(ServerKey.created_at.desc()).all()
-	return render_template('admin/admin_keys.html', server_keys=server_keys)
+    server_keys = ServerKey.query.order_by(ServerKey.created_at.desc()).all()
+    return render_template('admin/admin_keys.html', server_keys=server_keys,
+                           server_keys_required=settings.server_keys_required)
 
 
 def init_module(app):

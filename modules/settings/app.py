@@ -2,7 +2,9 @@ import secrets
 from pathlib import Path
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
-from flask_login import login_required, current_user
+from flask_login import current_user
+from modules.auth.decorators import login_required
+from modules.auth.csrf import csrf_protect
 from PIL import Image, UnidentifiedImageError
 
 from extensions import db
@@ -61,6 +63,7 @@ def _save_avatar(file_storage) -> str:
     return name
 
 @bp.route('/', methods=['GET', 'POST'])
+@csrf_protect
 @login_required
 def settings():
     if request.method == 'POST':

@@ -23,10 +23,11 @@
             <p class="label" style="margin-bottom: 6px;">Logins</p>
             <p class="display" style="font-size: 2rem; margin: 0;">{{ total_sessions }}</p>
         </div>
-        <div class="card" style="padding: 20px;">
-            <p class="label" style="margin-bottom: 6px;">Server Keys</p>
-            <p class="display" style="font-size: 2rem; margin: 0;">{{ server_keys }}</p>
-        </div>
+        <a href="{{ url_for('admin.admin_keys') }}" class="card" style="padding: 20px; display: block;">
+            <p class="label" style="margin-bottom: 6px;">Registrierung</p>
+            <p style="font-size: 1rem; font-weight: 600; margin: 0 0 4px;">{% if server_keys_required %}Server-Key erforderlich{% else %}Server-Key optional{% endif %}</p>
+            <p class="body-small text-secondary" style="margin: 0;">Verwalten →</p>
+        </a>
     </div>
 
     <!-- Browser & Device Stats -->
@@ -77,6 +78,7 @@
             <h3 style="margin: 0;">Letzte Logins</h3>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="{{ url_for('admin.admin_users') }}" class="btn btn-primary btn-sm">User Management →</a>
+                <a href="{{ url_for('admin.admin_keys') }}" class="btn btn-secondary btn-sm">Server Keys →</a>
             </div>
         </div>
         {% if recent_sessions %}

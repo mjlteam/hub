@@ -1,5 +1,7 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
-from flask_login import current_user, login_required
+from flask_login import current_user
+from modules.auth.decorators import login_required
+from modules.auth.csrf import csrf_protect
 
 from extensions import db
 from models import News
@@ -9,6 +11,7 @@ bp = Blueprint('news', __name__, url_prefix='/news')
 
 
 @bp.route('/', methods=['GET', 'POST'])
+@csrf_protect
 @login_required
 def news():
     # --- Admin actions (Erstellen / Bearbeiten / Anheften / Löschen) ---

@@ -5,119 +5,92 @@
 {% block content %}
 <div class="auth-container" x-data="registerForm()" x-cloak>
     <div class="auth-card">
-
         <div class="auth-header">
-            <h2>Registrieren</h2>
+            <h2>Konto erstellen</h2>
+            <p>Erstelle dein MJL-Team-Konto mit Benutzername und Passwort.</p>
         </div>
 
-        {% if key_verified %}
-        <div class="card card-padded" style="margin-bottom: 16px;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                <div>
-                    <p class="label" style="margin-bottom: 6px;">Server-Key bestätigt</p>
-                    <p class="body-small" style="margin: 0; color: var(--text-secondary);">Du kannst jetzt ein neues Konto anlegen.</p>
+        {% if key_required and not key_verified %}
+        <div class="card card-padded">
+            <div class="auth-header" style="margin-bottom: 20px;">
+                <h3>Server-Key benötigt</h3>
+                <p>Für neue Konten ist aktuell ein aktiver Server-Key erforderlich.</p>
+            </div>
+            <form method="post" class="space-y-5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="verify_key">
+                <div class="form-group">
+                    <label for="server_key" class="form-label">Server-Key</label>
+                    <input id="server_key" name="server_key" type="text" class="input" placeholder="Key eingeben" autocomplete="off" required autofocus>
                 </div>
-                <form method="post">
-                    <input type="hidden" name="action" value="clear_key">
-                    <button type="submit" class="btn btn-ghost btn-sm">Anderen Key verwenden</button>
-                </form>
-            </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-block">Key prüfen</button>
+            </form>
         </div>
-        {% endif %}
-
-        <div class="skel-stack">
-            {% if not key_verified %}
-            <div class="card card-padded skel-overlay">
-                <div class="skel skel-label"></div>
-                <div class="skel skel-input"></div>
-                <div class="skel skel-btn"></div>
-            </div>
-
-            <div class="card card-padded">
-                <form method="post" class="space-y-5" @submit="submitting = true">
-                    <div class="form-group">
-                        <label for="server_key" class="form-label">Server-Key</label>
-                        <input id="server_key" name="server_key" type="text" class="input" placeholder="Key eingeben" autocomplete="off" required autofocus value="{{ request.form.get('server_key', '') }}">
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting">
-                        <span x-show="!submitting">Key prüfen</span>
-                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
-                            <span class="spinner spinner--xl btn-loading-spinner"></span>
-                        </span>
-                    </button>
-                </form>
-            </div>
-            {% else %}
-            <div class="card card-padded skel-overlay">
-                <div class="skel skel-label"></div>
-                <div class="skel skel-input"></div>
-                <div class="skel skel-label"></div>
-                <div class="skel skel-input"></div>
-                <div class="skel skel-label"></div>
-                <div class="skel skel-input"></div>
-                <div class="skel skel-btn"></div>
-            </div>
-
-            <div class="card card-padded">
-                <form method="post" class="space-y-5" @submit="if (!isStrong) $event.preventDefault(); else submitting = true">
-                    <div class="form-group">
-                        <label for="username" class="form-label">Benutzername</label>
-                        <input id="username" name="username" type="text" class="input" placeholder="max.mustermann" autocomplete="username" required autofocus value="{{ request.form.get('username', '') }}" minlength="3" maxlength="32">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email" class="form-label">
-                            E-Mail
-                            <span class="form-label-optional">(optional)</span>
-                        </label>
-                        <input id="email" name="email" type="email" class="input" placeholder="max@beispiel.de" autocomplete="email" value="{{ request.form.get('email', '') }}">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password" class="form-label">Passwort</label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            class="input"
-                            placeholder="••••••••"
-                            autocomplete="new-password"
-                            required
-                            x-model="password"
-                            @input="checkStrength()"
-                        >
-
-                        <div class="pw-meter">
-                            <template x-for="i in 4" :key="i">
-                                <div
-                                    class="pw-meter__bar"
-                                    :class="barClass(i)"
-                                ></div>
-                            </template>
-                        </div>
-
-                        <div class="pw-hint" x-show="password.length > 0 && !isStrong" x-transition.opacity.duration.200ms x-cloak>
-
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting || !isStrong">
-                        <span x-show="!submitting">Konto erstellen</span>
-                        <span x-show="submitting" x-cloak style="display: inline-flex; align-items: center; gap: 8px;">
-                            <span class="spinner spinner--xl btn-loading-spinner"></span>
-                        </span>
-                    </button>
-                </form>
+        {% else %}
+            {% if pending_github %}
+            <div class="card" style="padding:16px 20px; margin-bottom:16px; border-color:var(--teal);">
+                <p class="body-small" style="margin:0; color:var(--teal-deep);">GitHub erkannt. Erstelle jetzt noch dein lokales Konto mit einem eigenen Passwort.</p>
             </div>
             {% endif %}
-        </div>
+            {% if key_required and key_verified %}
+            <div class="card" style="padding:16px 20px; margin-bottom:16px; border-color:var(--teal);">
+                <p class="body-small" style="margin:0; color:var(--teal-deep);">Server-Key bestätigt. Du kannst jetzt dein Konto erstellen.</p>
+            </div>
+            {% endif %}
+
+            <div class="skel-stack">
+                <div class="card card-padded skel-overlay">
+                    <div class="skel skel-label"></div>
+                    <div class="skel skel-input"></div>
+                    <div class="skel skel-label"></div>
+                    <div class="skel skel-input"></div>
+                    <div class="skel skel-label"></div>
+                    <div class="skel skel-input"></div>
+                    <div class="skel skel-btn"></div>
+                </div>
+
+                <div class="card card-padded">
+                    <form method="post" class="space-y-5" @submit="if (!isStrong) $event.preventDefault(); else submitting = true">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-group">
+                            <label for="username" class="form-label">Benutzername</label>
+                            <input id="username" name="username" type="text" class="input" placeholder="max.mustermann" autocomplete="username" required autofocus value="{{ request.form.get('username', pending_github.login if pending_github else '') }}" minlength="3" maxlength="32">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-Mail <span class="form-label-optional">(optional)</span></label>
+                            <input id="email" name="email" type="email" class="input" placeholder="max@beispiel.de" autocomplete="email" value="{{ request.form.get('email', pending_github.email if pending_github else '') }}" {% if pending_github %}readonly{% endif %}>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Passwort</label>
+                            <input id="password" name="password" type="password" class="input" placeholder="••••••••" autocomplete="new-password" required x-model="password" @input="checkStrength()">
+                            <div class="pw-meter">
+                                <template x-for="i in 4" :key="i"><div class="pw-meter__bar" :class="barClass(i)"></div></template>
+                            </div>
+                            <div class="pw-hint" x-show="password.length > 0 && !isStrong" x-transition.opacity.duration.200ms x-cloak>Mindestens 8 Zeichen, ein Buchstabe und eine Zahl.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': submitting }" :disabled="submitting || !isStrong">
+                            <span x-show="!submitting">Konto erstellen</span>
+                            <span x-show="submitting" x-cloak><span class="spinner spinner--xl btn-loading-spinner"></span></span>
+                        </button>
+
+                        {% if not pending_github %}
+                        <div class="separator-text" aria-hidden="true"><span>oder</span></div>
+                        <a href="{{ url_for('auth.github_login') }}" class="btn btn-github btn-lg btn-block" aria-label="Konto mit GitHub erstellen">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.23c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.11-1.52-1.11-1.52-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.58 2.35 1.12 2.92.86.09-.67.35-1.12.64-1.38-2.22-.26-4.55-1.14-4.55-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.2 9.2 0 0 1 12 6.96c.85 0 1.7.12 2.5.36 1.9-1.33 2.74-1.05 2.74-1.05.56 1.41.21 2.45.11 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9v2.81c0 .27.18.6.69.49A10.24 10.24 0 0 0 22 12.23C22 6.58 17.52 2 12 2Z"/></svg>
+                            <span>Mit GitHub registrieren</span>
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        {% endif %}
 
         <div class="auth-footer">
-            Bereits ein Konto?
-            <a href="{{ url_for('auth.login') }}">Jetzt anmelden</a>
+            Bereits ein Konto? <a href="{{ url_for('auth.login') }}">Jetzt anmelden</a>
         </div>
-
     </div>
 </div>
 {% endblock %}
@@ -130,22 +103,16 @@ function registerForm() {
         password: '',
         strength: 0,
         isStrong: false,
-        barClass(i) {
-            return {
-                'pw-meter__bar--active': i <= this.strength
-            };
-        },
+        barClass(i) { return { 'pw-meter__bar--active': i <= this.strength }; },
         checkStrength() {
             const p = this.password || '';
-            const len = p.length;
             const hasLetter = /[A-Za-z]/.test(p);
             const hasNumber = /[0-9]/.test(p);
-            // 4 Stufen: rot → gelb → grün → grün (stark)
             let s = 0;
-            if (len >= 2) s = 1;       // rot
-            if (len >= 5) s = 2;       // gelb
-            if (len >= 8) s = 3;       // grün
-            if (len >= 8 && hasLetter && hasNumber) s = 4; // stark
+            if (p.length >= 2) s = 1;
+            if (p.length >= 5) s = 2;
+            if (p.length >= 8) s = 3;
+            if (p.length >= 8 && hasLetter && hasNumber) s = 4;
             this.strength = s;
             this.isStrong = s >= 4;
         }
