@@ -1111,6 +1111,8 @@ input:-webkit-autofill:focus {
     gap: 16px;
     color: var(--text-tertiary);
     font-size: 0.8125rem;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .separator-text::before,
