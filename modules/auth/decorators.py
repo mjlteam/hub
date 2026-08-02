@@ -25,13 +25,7 @@ def login_required(view):
         if user is None or user.banned:
             logout_user()
             session.pop('user_id', None)
-            endpoint = (
-                'auth.github_login'
-                if current_app.config.get('GITHUB_CLIENT_ID')
-                and current_app.config.get('GITHUB_CLIENT_SECRET')
-                else 'auth.login'
-            )
-            return redirect(url_for(endpoint))
+            return redirect(url_for('auth.login'))
 
         if not current_user.is_authenticated or current_user.id != user.id:
             login_user(user)

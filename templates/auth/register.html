@@ -7,14 +7,13 @@
     <div class="auth-card">
         <div class="auth-header">
             <h2>Konto erstellen</h2>
-            <p>Erstelle dein MJL-Team-Konto mit Benutzername und Passwort.</p>
         </div>
 
         {% if key_required and not key_verified %}
         <div class="card card-padded">
             <div class="auth-header" style="margin-bottom: 20px;">
                 <h3>Server-Key benötigt</h3>
-                <p>Für neue Konten ist aktuell ein aktiver Server-Key erforderlich.</p>
+                <p>Für neue Konten ist ein aktiver Server-Key erforderlich.</p>
             </div>
             <form method="post" class="space-y-5">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
