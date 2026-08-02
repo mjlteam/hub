@@ -264,15 +264,27 @@ def _handle_login(template: str):
 
 @bp.route('/login/github')
 def github_login():
-    """Start GitHub OAuth only after the registration gate is satisfied."""
+    """Start GitHub OAuth; the login-page flow does not require a server key."""
     if current_user.is_authenticated:
         return redirect(url_for('hub.dashboard'))
-    if _server_keys_required() and _verified_registration_key() is None:
-        # Continue the OAuth request only after the registration gate; the
-        # gate page itself never exposes a GitHub button.
-        session['oauth_after_key'] = True
-        flash('Bitte zuerst den Server-Key bestätigen.', 'info')
-        return redirect(url_for('auth.register'))
+
+    # The optional registration CTA keeps the server-key rule. The main login
+    # page intentionally uses the default login flow and bypasses that gate.
+    # Only an explicit registration CTA/continuation may use the key gate.
+    # A normal login click always starts a clean, key-free OAuth flow.
+    registration_flow = request.args.get('flow') == 'register'
+    if registration_flow:
+        session['github_registration_flow'] = True
+        if _server_keys_required() and _verified_registration_key() is None:
+            session['oauth_after_key'] = True
+            flash('Bitte zuerst den Server-Key bestätigen.', 'info')
+            return redirect(url_for('auth.register'))
+    else:
+        # A fresh click from the main login page must never inherit a stale
+        # registration flow left by an abandoned OAuth attempt.
+        session.pop('github_registration_flow', None)
+        session.pop('oauth_after_key', None)
+
     if not current_app.config.get('GITHUB_CLIENT_ID') or not current_app.config.get('GITHUB_CLIENT_SECRET'):
         flash('GitHub-Anmeldung ist derzeit nicht konfiguriert.', 'error')
         return redirect(url_for('auth.login'))
@@ -286,6 +298,8 @@ def github_login():
 def github_callback():
     """Finish GitHub OAuth, create/link the local user and start the session."""
     if request.args.get('error'):
+        session.pop('github_registration_flow', None)
+        session.pop('oauth_after_key', None)
         flash('GitHub-Anmeldung abgebrochen. Bitte versuche es erneut.', 'error')
         return redirect(url_for('auth.login'))
 
@@ -303,15 +317,17 @@ def github_callback():
         if not github_id or not email or len(email) > MAX_EMAIL_LEN or not EMAIL_RE.fullmatch(email):
             raise ValueError('GitHub profile has no usable primary email')
 
-        # The server-key gate must still be valid when GitHub redirects back;
-        # an admin may have paused or exhausted the key during OAuth.
-        if _server_keys_required() and _verified_registration_key() is None:
-            # Keep the continuation marker so re-verifying a replacement key
-            # starts OAuth again without exposing GitHub on the gate page.
+        # Only the explicit registration flow is subject to the server-key
+        # gate. A GitHub login started on the main login page must work without
+        # a key, including when GitHub redirects back here.
+        registration_flow = bool(session.get('github_registration_flow') or session.get('oauth_after_key'))
+        if registration_flow and _server_keys_required() and _verified_registration_key() is None:
             session['oauth_after_key'] = True
             flash('Der Server-Key ist nicht mehr gültig. Bitte bestätige ihn erneut.', 'error')
             return redirect(url_for('auth.register'))
     except (MismatchingStateError, OAuthError, RequestException, SQLAlchemyError, ValueError, TypeError):
+        session.pop('github_registration_flow', None)
+        session.pop('oauth_after_key', None)
         flash('GitHub-Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.', 'error')
         return redirect(url_for('auth.login'))
 
@@ -320,6 +336,8 @@ def github_callback():
         existing_email_user = User.query.filter_by(email=email).first()
     except SQLAlchemyError:
         db.session.rollback()
+        session.pop('github_registration_flow', None)
+        session.pop('oauth_after_key', None)
         flash('GitHub-Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.', 'error')
         return redirect(url_for('auth.login'))
 
@@ -327,8 +345,13 @@ def github_callback():
         # Do not silently take over or overwrite another local account solely
         # because the same email appears in GitHub. Explicit linking can be
         # added later after the user has authenticated locally.
+        session.pop('github_registration_flow', None)
+        session.pop('oauth_after_key', None)
         flash('Für diese E-Mail existiert bereits ein lokales Konto. Bitte zuerst lokal anmelden.', 'error')
         return redirect(url_for('auth.login'))
+
+    session.pop('github_registration_flow', None)
+    session.pop('oauth_after_key', None)
 
     if user is None:
         # GitHub never creates an account silently. Keep only the verified
@@ -431,7 +454,7 @@ def register():
                                    )
         session[REGISTRATION_KEY_SESSION] = key.id
         if session.pop('oauth_after_key', False):
-            return redirect(url_for('auth.github_login'))
+            return redirect(url_for('auth.github_login', flow='register'))
         flash('Server-Key bestätigt. Du kannst jetzt dein Konto erstellen.', 'success')
         return redirect(url_for('auth.register'))
 
