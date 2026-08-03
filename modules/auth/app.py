@@ -577,11 +577,15 @@ def init_module(app):
 
 
 def validate_password(password: str, username: str | None = None):
-
+    """Validate the shared password policy for registration and account changes."""
+    if not isinstance(password, str):
+        password = ''
 
     reasons = []
     if not password or len(password) < 8:
         reasons.append('mindestens 8 Zeichen')
+    if len(password) > MAX_PASSWORD_LEN:
+        reasons.append(f'höchstens {MAX_PASSWORD_LEN} Zeichen')
     if not re.search(r'[A-Za-z]', password):
         reasons.append('mindestens ein Buchstabe')
     if not re.search(r'[0-9]', password):

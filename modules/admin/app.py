@@ -5,6 +5,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user
 from modules.auth.decorators import login_required
 from modules.auth.csrf import csrf_protect
+from modules.auth.app import validate_password
 from sqlalchemy import func
 
 from extensions import db
@@ -73,7 +74,10 @@ def admin_dashboard():
 def admin_users():
 	if request.method == 'POST':
 		user_id = request.form.get('user_id', type=int)
-		action = request.form.get('action', 'role')
+		action = request.form.get('action', '').strip()
+		if action not in {'ban', 'unban', 'password', 'role'}:
+			flash('Ungültige Admin-Aktion.', 'error')
+			return redirect(url_for('admin.admin_users'))
 
 		user = db.session.get(User, user_id)
 		if user is None:
@@ -98,8 +102,9 @@ def admin_users():
 		# --- Password change ---
 		if action == 'password':
 			new_pw = request.form.get('new_password', '')
-			if len(new_pw) < 8:
-				flash('Passwort muss mindestens 8 Zeichen haben.', 'error')
+			valid, reasons = validate_password(new_pw, user.username)
+			if not valid:
+				flash('Passwort entspricht nicht der Sicherheitsrichtlinie: ' + '; '.join(reasons), 'error')
 				return redirect(url_for('admin.admin_users'))
 			user.set_password(new_pw)
 			db.session.commit()
@@ -180,7 +185,10 @@ def admin_keys():
         db.session.commit()
 
     if request.method == 'POST':
-        action = request.form.get('action', '')
+        action = request.form.get('action', '').strip()
+        if action not in {'toggle_requirement', 'delete', 'toggle', 'create', 'update'}:
+            flash('Ungültige Key-Aktion.', 'error')
+            return redirect(url_for('admin.admin_keys'))
 
         if action == 'toggle_requirement':
             settings.server_keys_required = request.form.get('server_keys_required') == 'on'

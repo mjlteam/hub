@@ -59,8 +59,15 @@ def _configure_proxy(app: Flask) -> None:
         '1', 'true', 'yes', 'on',
     }
     if trusted:
-        # Only the headers needed to build the public OAuth URL are trusted.
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+        # Trust only the headers needed to build the public OAuth URL. The
+        # deployment must not expose the app directly when this is enabled.
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_proto=1,
+            x_host=1,
+            x_port=1,
+            x_prefix=1,
+        )
 
 
 def get_git_commit(project_root: Path) -> str | None:
@@ -100,7 +107,9 @@ def create_app():
     app.config.setdefault('SESSION_COOKIE_SAMESITE', 'Lax')
     app.config.setdefault('REMEMBER_COOKIE_HTTPONLY', True)
     app.config.setdefault('REMEMBER_COOKIE_SAMESITE', 'Lax')
-    app.config.setdefault('SESSION_COOKIE_SECURE', os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true')
+    app.config['SESSION_COOKIE_SECURE'] = os.environ.get(
+        'SESSION_COOKIE_SECURE', 'false'
+    ).lower() == 'true'
 
     import secrets
 
@@ -145,7 +154,9 @@ def create_app():
             pkg = entry.get('package') or entry.get('name')
             if not pkg:
                 continue
-            mod_name = f"{pkg}.app"
+            mod_name = pkg if pkg.endswith('.app') else f'{pkg}.app'
+            if not mod_name.startswith('modules.'):
+                mod_name = f'modules.{mod_name}'
             try:
                 mod = importlib.import_module(mod_name)
             except Exception as e:
@@ -153,10 +164,13 @@ def create_app():
                 continue
 
             # If the auth module was just loaded, set up the user loader
-            if pkg.endswith('auth'):
+            if mod_name.endswith('.auth.app'):
                 @login_manager.user_loader
                 def load_user(user_id):
-                    return db.session.get(User, int(user_id))
+                    try:
+                        return db.session.get(User, int(user_id))
+                    except (TypeError, ValueError):
+                        return None
 
             if hasattr(mod, 'bp'):
                 try:

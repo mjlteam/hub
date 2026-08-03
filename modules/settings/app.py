@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import current_user
 from modules.auth.decorators import login_required
 from modules.auth.csrf import csrf_protect
+from modules.auth.app import validate_password
 from PIL import Image, UnidentifiedImageError
 
 from extensions import db
@@ -107,9 +108,11 @@ def settings():
             new_pw = request.form.get('new_password', '')
             if not current_user.check_password(current_pw):
                 flash('Aktuelles Passwort ist falsch.', 'error')
-            elif len(new_pw) < 8:
-                flash('Neues Passwort muss mindestens 8 Zeichen haben.', 'error')
             else:
+                valid, reasons = validate_password(new_pw, current_user.username)
+                if not valid:
+                    flash('Passwort entspricht nicht der Sicherheitsrichtlinie: ' + '; '.join(reasons), 'error')
+                    return redirect(url_for('settings.settings'))
                 current_user.set_password(new_pw)
                 db.session.commit()
                 flash('Passwort erfolgreich geändert.', 'success')
