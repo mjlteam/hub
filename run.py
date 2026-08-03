@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from flask import Flask, flash, redirect, render_template, session, url_for
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 from extensions import db, login_manager
 from models import User
 from modules.auth.csrf import csrf_token
@@ -22,18 +23,17 @@ load_dotenv()
 _commit_cache = None
 
 
-def _configured_github_redirect_uri() -> str:
-    """Return the exact callback URI registered with GitHub."""
-    value = os.environ.get(
-        'GITHUB_REDIRECT_URI',
-        'http://localhost:5000/auth/github/callback',
-    ).strip()
-    if value.endswith('//'):
-        raise RuntimeError(
-            'GITHUB_REDIRECT_URI may have at most one trailing slash; '
-            'configure /auth/github/callback exactly.'
-        )
-    value = value[:-1] if value.endswith('/') else value
+def _configured_github_redirect_uri() -> str | None:
+    """Return an explicit GitHub callback URI, or None for request-based discovery.
+
+    GitHub compares this URI exactly. Leaving it unset lets the login request
+    determine the public host/scheme, which avoids a localhost/127.0.0.1
+    mismatch during local development and works with a configured proxy.
+    """
+    value = os.environ.get('GITHUB_REDIRECT_URI', '').strip()
+    if not value:
+        return None
+
     parsed = urlparse(value)
     if (
         parsed.scheme not in {'http', 'https'}
@@ -44,12 +44,23 @@ def _configured_github_redirect_uri() -> str:
         or parsed.query
         or parsed.fragment
         or parsed.path != '/auth/github/callback'
+        or value.endswith('/')
     ):
         raise RuntimeError(
             'GITHUB_REDIRECT_URI must be an http(s) URL ending exactly '
             'in /auth/github/callback without query, fragment, or trailing slash.'
         )
     return value
+
+
+def _configure_proxy(app: Flask) -> None:
+    """Honor forwarded public URL headers only when explicitly trusted."""
+    trusted = os.environ.get('TRUST_PROXY', '').strip().lower() in {
+        '1', 'true', 'yes', 'on',
+    }
+    if trusted:
+        # Only the headers needed to build the public OAuth URL are trusted.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 
 def get_git_commit(project_root: Path) -> str | None:
@@ -70,14 +81,15 @@ def get_git_commit(project_root: Path) -> str | None:
 def create_app():
 
     app = Flask(__name__)
+    _configure_proxy(app)
 
     # Basic configuration (loaded from .env by python-dotenv above)
     app.config.setdefault('SECRET_KEY', os.environ.get('SECRET_KEY', 'dev-secret'))
     app.config.setdefault('SQLALCHEMY_DATABASE_URI', os.environ.get('DATABASE_URL', 'sqlite:///main.db'))
     app.config['GITHUB_CLIENT_ID'] = os.environ.get('GITHUB_CLIENT_ID', '')
     app.config['GITHUB_CLIENT_SECRET'] = os.environ.get('GITHUB_CLIENT_SECRET', '')
-    # Keep the OAuth callback stable across localhost/127.0.0.1 requests.
-    # GitHub compares this value byte-for-byte with the OAuth app setting.
+    # An explicit value is useful for a fixed production domain. If it is
+    # absent, the OAuth route derives the callback from the current public URL.
     app.config['GITHUB_REDIRECT_URI'] = _configured_github_redirect_uri()
     app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
     # Immer frische Templates laden (kein altes „Stark"/Haken mehr nach Edits)
@@ -211,8 +223,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.debug:
-        # Keep the host aligned with the registered local GitHub callback URL.
-        host = 'localhost'
+        # The callback is derived from the host used to open the app unless an
+        # explicit GITHUB_REDIRECT_URI is configured.
+        host = os.environ.get('FLASK_HOST', 'localhost')
         debug_mode = True
     else:
         host = '0.0.0.0'

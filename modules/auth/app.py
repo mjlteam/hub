@@ -289,7 +289,13 @@ def github_login():
         flash('GitHub-Anmeldung ist derzeit nicht konfiguriert.', 'error')
         return redirect(url_for('auth.login'))
 
-    redirect_uri = current_app.config['GITHUB_REDIRECT_URI']
+    redirect_uri = current_app.config.get('GITHUB_REDIRECT_URI')
+    if not redirect_uri:
+        # Use the public host/scheme of the current request when no fixed
+        # production callback was configured. This prevents localhost vs
+        # 127.0.0.1 mismatches during local development; ProxyFix in run.py
+        # supplies the external host when TRUST_PROXY is enabled.
+        redirect_uri = url_for('auth.github_callback', _external=True)
     current_app.logger.info('GitHub OAuth redirect_uri=%s', redirect_uri)
     return oauth.github.authorize_redirect(redirect_uri)
 

@@ -37,11 +37,27 @@ Kopiere `.env.example` zu `.env` und passe Werte an. Wichtige Variablen:
 - `SECRET_KEY` — sollte für Produktion ein sicherer, zufälliger Wert sein.
 - `DATABASE_URL` — z. B. `sqlite:///main.db` oder eine PostgreSQL-URL.
 - `GITHUB_CLIENT_ID` und `GITHUB_CLIENT_SECRET` — Zugangsdaten der GitHub OAuth App.
-- `GITHUB_REDIRECT_URI` — exakt `http://localhost:5000/auth/github/callback`, ohne abschließenden Slash.
+- `GITHUB_REDIRECT_URI` — optional feste Callback-URL, zum Beispiel
+  `https://deine-domain.de/auth/github/callback`, ohne abschließenden Slash.
+  Wenn die Variable leer bleibt, wird die URL aus dem Host und Protokoll des
+  aktuellen Requests erzeugt.
+- `TRUST_PROXY=true` — nur hinter einem vertrauenswürdigen Reverse-Proxy setzen,
+  der `X-Forwarded-*`-Header korrekt weitergibt.
 
-Für lokale OAuth-Entwicklung muss die Callback-URL der GitHub-App exakt
-`http://localhost:5000/auth/github/callback` lauten. Vor dem ersten Start
-werden Tabellen und additive Schema-Upgrades ausgeführt:
+Für lokale OAuth-Entwicklung solltest du eine einzige Adresse verwenden.
+Die empfohlene lokale Adresse ist `http://localhost:5000`; registriere dafür
+exakt:
+
+```text
+http://localhost:5000/auth/github/callback
+```
+
+Öffne die App danach auch immer über `http://localhost:5000` und wechsle nicht
+zwischen `localhost` und `127.0.0.1`. Wenn du bewusst `127.0.0.1` verwenden
+willst, musst du diese Callback-URL stattdessen in GitHub registrieren und
+`GITHUB_REDIRECT_URI` exakt darauf setzen. Für Produktion immer eine feste
+öffentliche HTTPS-URL konfigurieren. Vor dem ersten Start werden Tabellen und
+additive Schema-Upgrades ausgeführt:
 
 ```bash
 python scripts/init_db.py
@@ -65,10 +81,10 @@ python scripts/init_db.py
 python run.py --debug
 ```
 
-Die App läuft dabei auf `http://localhost:5000/`. Die registrierte GitHub-Callback-URL
-und `GITHUB_REDIRECT_URI` müssen exakt `http://localhost:5000/auth/github/callback`
-sein — ohne abschließenden Slash. Wenn du die App über `127.0.0.1` öffnest, bleibt die
-OAuth-Redirect-URI trotzdem bewusst `localhost`; beide Werte dürfen nicht vermischt werden.
+Die App läuft dabei standardmäßig auf `http://localhost:5000/`. GitHub akzeptiert
+nur eine exakt passende Callback-URL: gleicher Host, gleiches Protokoll, gleicher
+Port und kein abschließender Slash. In Produktion muss `GITHUB_REDIRECT_URI`
+explizit auf die öffentliche HTTPS-Adresse gesetzt werden.
 
 Module
 ------
